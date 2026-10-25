@@ -1,0 +1,68 @@
+{
+  "attribution": "Contains BMRS data (c) Elexon Limited copyright and database right.",
+  "data_sha256": "a4e5f8b3846eda775f6eb0cec9324a98d68c6bc4dbe373a476ff5d2df3f5d2e4",
+  "description": "Verbatim Elexon Insights API rows (FUELHH WIND actuals, WINDFOR forecast vintages).",
+  "files": {
+    "fuelhh_wind.csv.gz": {
+      "bytes": 14303,
+      "rows": 1488,
+      "sha256": "862e97325a5d18d3284e229a6a17ba0f0d25a80a6f83f8c62d2342f4662ddf40"
+    },
+    "windfor.csv.gz": {
+      "bytes": 113116,
+      "rows": 22776,
+      "sha256": "9df5f7bec5c8feed6c34401af3dc0400396ff30ae9cebe5d9ed648ca53aad8d2"
+    }
+  },
+  "is_synthetic": false,
+  "licence_note": "Third-party data subject to Elexon BMRS Data Licence Terms; NOT covered by this repository's MIT licence. Verify attribution wording against the current licence.",
+  "limitations": [
+    "FUELHH WIND and WINDFOR may not cover the same set of generators; differences between them may reflect dataset scope as well as forecast performance (docs/planning/04-data-research-notes.md s10).",
+    "WINDFOR is hourly while FUELHH is half-hourly; the hourly forecast is shared by two half-hours.",
+    "Whether a WINDFOR row stamped T describes the hour starting or ending at T is not documented; 'start' is an unverified assumption.",
+    "The Insights API serves one FUELHH value per interval; later corrections (if any) are not observable.",
+    "publishTime is the BMRS publication timestamp; real-world availability to a trader may lag it.",
+    "Snapshot is a point-in-time copy; Elexon may revise or withdraw upstream data."
+  ],
+  "period_covered": {
+    "delivery_end": "2026-01-31",
+    "delivery_start": "2026-01-01",
+    "windfor_publish_from": "2025-12-27T00:00:00Z",
+    "windfor_publish_to": "2026-02-04T00:00:00Z"
+  },
+  "retrieved_at": "2026-10-25T11:06:27Z",
+  "schema_version": 1,
+  "sources": [
+    {
+      "attempts": 1,
+      "dataset": "FUELHH",
+      "endpoint": "/datasets/FUELHH/stream",
+      "http_status": 200,
+      "query": {
+        "fuelType": "WIND",
+        "settlementDateFrom": "2026-01-01",
+        "settlementDateTo": "2026-01-31"
+      },
+      "retrieved_at": "2026-10-25T11:06:26Z",
+      "rows_returned": 1488,
+      "url": "https://data.elexon.co.uk/bmrs/api/v1/datasets/FUELHH/stream?settlementDateFrom=2026-01-01&settlementDateTo=2026-01-31&fuelType=WIND"
+    },
+    {
+      "attempts": 1,
+      "dataset": "WINDFOR",
+      "endpoint": "/datasets/WINDFOR/stream",
+      "http_status": 200,
+      "query": {
+        "publishDateTimeFrom": "2025-12-27T00:00:00Z",
+        "publishDateTimeTo": "2026-02-04T00:00:00Z"
+      },
+      "retrieved_at": "2026-10-25T11:06:27Z",
+      "rows_returned": 22776,
+      "url": "https://data.elexon.co.uk/bmrs/api/v1/datasets/WINDFOR/stream?publishDateTimeFrom=2025-12-27T00%3A00%3A00Z&publishDateTimeTo=2026-02-04T00%3A00%3A00Z"
+    }
+  ],
+  "tool": {
+    "name": "wind-forecast-intelligence",
+    "version": "0.1.0"
+  }
+}

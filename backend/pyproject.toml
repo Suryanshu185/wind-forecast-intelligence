@@ -33,6 +33,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]  # line width is enforced by `ruff format`; long prose strings are fine
 
 [tool.mypy]
 python_version = "3.12"
@@ -41,3 +42,6 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 check_untyped_defs = true
 plugins = ["pydantic.mypy"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E501"]

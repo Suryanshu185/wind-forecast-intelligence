@@ -1,4 +1,5 @@
 """FastAPI application factory."""
+
 from __future__ import annotations
 
 from fastapi import FastAPI
@@ -16,8 +17,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         title="UK Wind Forecast Intelligence API",
         version="0.1.0",
         description=(
-            "Retrospective evaluation of day-ahead wind forecasts "
-            "(Elexon BMRS WINDFOR vs FUELHH)."
+            "Retrospective evaluation of day-ahead wind forecasts (Elexon BMRS WINDFOR vs FUELHH)."
         ),
     )
     app.state.settings = settings
