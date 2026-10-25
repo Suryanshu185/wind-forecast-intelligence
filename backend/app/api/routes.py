@@ -16,6 +16,7 @@ Q = Annotated[m.AnalysisQuery, Query()]
 
 
 def service_of(request: Request) -> AnalysisService:
+    request.app.state.ensure_loaded()  # no-op once loaded; makes hosts without lifespan support work
     svc: AnalysisService | None = getattr(request.app.state, "service", None)
     if svc is None:
         detail = getattr(request.app.state, "load_error", "dataset not loaded")
@@ -25,6 +26,7 @@ def service_of(request: Request) -> AnalysisService:
 
 @router.get("/health", response_model=m.HealthOut, tags=["meta"])
 def health(request: Request) -> m.HealthOut:
+    request.app.state.ensure_loaded()
     loaded = getattr(request.app.state, "service", None) is not None
     return m.HealthOut(
         status="ok" if loaded else "degraded",

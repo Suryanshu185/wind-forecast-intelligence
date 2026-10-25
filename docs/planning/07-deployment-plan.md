@@ -45,3 +45,15 @@ Early spike (during M0/M1, after approval): deploy a throwaway hello-world conta
 
 ## 6. Pre-publication checklist (brief §10)
 Repository name anonymous · commit author/committer identities anonymous (see D-6) · no secrets/personal data (`git log -p | grep` scan + `gitleaks`-style review) · no unintended datasets (only reviewed snapshot) · README complete · Docker workflow verified from a clean clone · tests green · final commit is the reviewed submission · public access verified in a logged-out browser · deployment URL in README · attribution & AI-usage disclosure present.
+
+
+---
+
+## 7. Decision update (2026-10-25): Vercel is the deployment target
+
+The owner chose Vercel. Consequences relative to the options above (this is "Option B" in §3, now implemented):
+- Static UI from the Vercel CDN (no cold start for the UI); `/api/*` served by one Python Function (`api/index.py`) that imports the existing FastAPI app. The snapshot is bundled via `functions.includeFiles`; dependencies come from the lockfile-derived `requirements.txt` (≈ 80 MB installed, well under the 500 MB limit).
+- Serverless hosts may not run ASGI lifespan events, so the dataset is now loaded lazily on first request (a failed load is reported as 503 and retried; no substitute data).
+- The function has a cold start (Python + pandas import, then a ≈ 25k-row snapshot load); not yet measured. The UI's error state already explains a slow first request.
+- `render.yaml` was removed. The Dockerfile/compose files remain for local use and other container hosts.
+- Still unverified until a real deployment: build success, rewrite behaviour (`/api/*` → function, SPA fallback), response headers, cold-start time, Vercel plan limits for the chosen account type (including Hobby plan terms on non-commercial use).

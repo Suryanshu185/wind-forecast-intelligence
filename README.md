@@ -14,7 +14,7 @@ It answers three questions a procurement team would ask:
 |---|---|
 | **Live deployment** | _Not deployed yet — awaiting the owner's approval._ (URL will be added here.) |
 | **Stack** | React 19 + TypeScript · Python 3.12 + FastAPI · pandas/NumPy · Docker/Compose |
-| **Tests** | 256 backend (pytest) · 48 frontend (Vitest + Testing Library) |
+| **Tests** | 261 backend (pytest) · 48 frontend (Vitest + Testing Library) |
 
 ![Forecast Explorer](docs/images/explorer.jpg)
 
@@ -88,7 +88,8 @@ All verified against live API responses; reproducible with the scripts in [`docs
 ```
 .
 ├── README.md  LICENSE  NOTICE  .env.example  .gitignore  .dockerignore
-├── Dockerfile  docker-compose.yml  render.yaml
+├── Dockerfile  docker-compose.yml        # local/self-hosted container
+├── vercel.json  requirements.txt  api/    # Vercel deployment (static UI + FastAPI function)
 ├── data/snapshots/              # pinned REAL Elexon snapshot + manifest.json + README (provenance, licence note)
 ├── backend/
 │   ├── pyproject.toml  uv.lock
@@ -232,13 +233,17 @@ Errors use one envelope: `{"error": {"code": "VALIDATION_ERROR|OUT_OF_RANGE|NOT_
 - **One winter month.** No seasonal generalisation; tail statistics (P90/P95) are imprecise; scenario buffers are in-sample and descriptive.
 - **Actuals are as served today**; later corrections (if any) are not observable. The WINDFOR publication times in UTC differ between winter and summer and from Elexon's documented list — the app only uses observed `publishTime` values.
 - **Not established:** the BMRS licence text could not be retrieved (Elexon's site blocks automated access). The attribution wording comes from a third-party catalogue and is displayed as unverified (§10).
-- **Docker:** production compose service verified; dev/test profiles not (see §4). **Deployment** not yet performed.
+- **Docker:** production compose service verified; dev/test profiles not (see §4). **Deployment** not yet performed (Vercel configuration is prepared and locally simulated, see §9).
 
 ---
 
 ## 9. Deployment
 
-The recommended target is **Render** (single Docker web service built from this repository's `Dockerfile`), described by [`render.yaml`](render.yaml); it has **not** been applied. Verified against Render's current documentation: free web services spin down after 15 minutes idle and take about a minute to restart, and the filesystem is ephemeral. This app needs no persistent storage (it serves a snapshot baked into the image), and the UI explains a possible start-up delay if the first request fails. Vercel (FastAPI Python runtime, 500 MB bundle limit) is a documented fallback; see [`docs/planning/07-deployment-plan.md`](docs/planning/07-deployment-plan.md).
+The deployment target is **Vercel**: the React app is built to static files and served from the CDN, and the FastAPI app runs as a Python Function ([`api/index.py`](api/index.py)) behind `/api/*`, configured by [`vercel.json`](vercel.json) and the lockfile-pinned [`requirements.txt`](requirements.txt). The pinned January 2026 snapshot is bundled with the function, so the deployed app needs no database and makes no calls to Elexon at runtime. Vercel's documentation (checked 2026-10-25) supports FastAPI on its Python runtime with dependencies from `requirements.txt`, a 500 MB uncompressed bundle limit (this function's dependencies are ≈ 80 MB) and a read-only filesystem (the app writes nothing).
+
+**To deploy** (needs the owner's Vercel account): import the GitHub repository in the Vercel dashboard (framework preset *Other*, root directory = repository root; everything else comes from `vercel.json`), or run `npx vercel` / `npx vercel --prod` from the repository root after `vercel login`.
+
+**Verification status:** the function entry point was run locally from an environment built **only** from `requirements.txt` with ASGI lifespan disabled (as serverless hosts may), and returned the expected real-snapshot results; `vercel.json` consistency (bundled snapshot, API-before-SPA rewrites, CSP) and the `requirements.txt`/`uv.lock` match are covered by tests. **Not verified:** an actual Vercel build and deployment, Vercel's routing behaviour for the rewrites, and cold-start timing — none of these can be checked until the project is deployed. The Docker image remains available for any container host (§4).
 
 ---
 
@@ -254,7 +259,7 @@ The recommended target is **Render** (single Docker web service built from this 
 
 This project was built with substantial AI assistance. It does not claim that every line was written by a person, nor that every line was written by an AI, and per-line authorship was not tracked.
 
-- **Kiro** (an AI coding agent, run from the command line) drafted most of the repository content in sessions directed by the owner: the planning documents, the research probes, the backend and frontend code, the automated tests, the Docker/Render configuration, the screenshots and this README.
+- **Kiro** (an AI coding agent, run from the command line) drafted most of the repository content in sessions directed by the owner: the planning documents, the research probes, the backend and frontend code, the automated tests, the Docker and Vercel configuration, the screenshots and this README.
 - **ChatGPT** was also used by the owner as an AI-assisted development tool. What it was used for is not recorded in this repository, so no specific file or task is attributed to it here.
 - **Human role:** the owner set the requirements and made the product and analytical decisions (for example the default cutoff, how hourly forecasts are handled, how conflicting duplicates are treated, including a real data snapshot, the licence and the hosting target), and approved the plan and the implementation report at defined checkpoints. No claim is made of line-by-line human review.
 - **How claims were checked rather than assumed:** data findings come from re-runnable scripts that call the public Elexon API ([`docs/planning/research/`](docs/planning/research)); the production analytics are tested against hand-computed examples, a brute-force oracle and an independent recomputation from the raw snapshot; items that could not be verified (Docker build, official licence wording, market deadlines, hour alignment) are listed in §8 as unverified instead of being asserted.

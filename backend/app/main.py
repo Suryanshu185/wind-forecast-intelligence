@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -38,16 +39,31 @@ def create_app(
     settings = settings or get_settings()
     configure_logging(settings.log_level)
 
+    load_lock = threading.Lock()
+
+    def ensure_loaded(app: FastAPI) -> None:
+        """Load the dataset once. Called from the lifespan hook AND lazily on first use, because serverless hosts
+        (e.g. Vercel) may not run ASGI lifespan events. A failed load is reported (never hidden) and retried."""
+        if getattr(app.state, "service", None) is not None:
+            return
+        with load_lock:
+            if getattr(app.state, "service", None) is not None:
+                return
+            try:
+                repo = repository or build_repository(settings)
+                app.state.service = AnalysisService(repo.load(), settings)
+                app.state.load_error = None
+                log.info(
+                    "dataset loaded", extra={"extra_fields": {"mode": settings.data_source_mode}}
+                )
+            except Exception as exc:  # surfaced via /health and 503s, never hidden
+                app.state.service = None
+                app.state.load_error = f"{type(exc).__name__}: {exc}"
+                log.error("dataset failed to load: %s", app.state.load_error)
+
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        try:
-            repo = repository or build_repository(settings)
-            app.state.service = AnalysisService(repo.load(), settings)
-            log.info("dataset loaded", extra={"extra_fields": {"mode": settings.data_source_mode}})
-        except Exception as exc:
-            app.state.service = None
-            app.state.load_error = f"{type(exc).__name__}: {exc}"
-            log.error("dataset failed to load: %s", app.state.load_error)
+        ensure_loaded(app)
         yield
 
     app = FastAPI(
@@ -63,6 +79,8 @@ def create_app(
     )
     app.state.settings = settings
     app.state.service = None
+    app.state.load_error = None
+    app.state.ensure_loaded = lambda: ensure_loaded(app)
     app.add_middleware(GZipMiddleware, minimum_size=1024)
     if settings.cors_origins:
         app.add_middleware(

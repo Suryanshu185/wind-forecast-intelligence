@@ -34,7 +34,7 @@ Likelihood (L) / Impact (I): H, M, L.
 | R-5 | Misreading missing as zero | M | H | `Optional[float]` end-to-end; JSON `null`; chart gaps; tests for zero vs missing | tests |
 | R-6 | **Local disk nearly full (≈0.9 GiB free)** — `node_modules`, Python venv, Docker images may not fit; failed installs corrupt state | H | H | Free ≥ 5 GB before M0; `uv` cache & npm cache pruning; avoid duplicate toolchains; test Docker build incrementally | user |
 | R-7 | Elexon API change/outage/retention | L | M | Pinned snapshot; ingestion isolated; retries; documentation of query used | ingest |
-| R-8 | Render free tier cold start (~1 min) disappoints reviewer | M | M | Frontend "service waking" UX; README note; keep-warm or Option B | deploy |
+| R-8 | ~~Render free tier cold start~~ superseded: target is Vercel (static UI + Python Function). Residual risk: function cold start (pandas import + snapshot load) not yet measured; rewrites/bundling unverified until deployed | M | M | UI error/retry state; lazy-load + retry; measure after first deploy | deploy |
 | R-9 | Over-claiming in Decision Intelligence (implying savings/purchase advice) | M | H | Fixed disclaimers; no £/volume; copy reviewed; tests assert absence | product |
 | R-10 | Timezone/DST bugs | M | M | UTC internal; `zoneinfo`; DST fixtures; Jan has no DST so also tested synthetically | tests |
 | R-11 | Time overrun | M | H | Vertical slice first; defined cut order (`03`); contingency 1 h | lead |
@@ -77,3 +77,6 @@ New risks from Investigations A/B:
 | R-20 | **Scope mismatch FUELHH WIND vs WINDFOR (diagnostic: FUELHH ≈ 2.2 GW below B1630; bias vs FUELHH −1.84 GW, vs B1630 +0.41 GW)** misread as forecast skill | H | H | Persistent scope warning with figures and provenance; std/bias decomposition; no bias correction; documented in demo |
 | R-21 | Elexon licence text not retrievable (403) | M | M | Attribution used verbatim; owner to verify before publication; snapshot flagged accordingly |
 | R-22 | **Docker daemon not running; disk 389 MiB free** | H | H | Resolve before M0 installs (see M0 report) |
+
+## 6. Deployment target change (2026-10-25)
+Owner decision: **deploy to Vercel** (not Render). Implemented as `vercel.json` + `api/index.py` + `requirements.txt`; see `07-deployment-plan.md` §7.
