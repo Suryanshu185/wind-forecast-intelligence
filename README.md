@@ -155,7 +155,7 @@ docker compose --profile test run --rm test-backend
 docker compose --profile test run --rm test-frontend
 ```
 
-> **Verification status:** the Dockerfile and compose file were written and statically checked, and the image layout was simulated (production-only virtualenv from the lockfile + only the files the Dockerfile copies, run with the image's environment and health-check command). **`docker build` / `docker compose up` could not be executed on the development machine** because Docker Desktop's engine failed to start there (containerd exited with status 2 while the host disk had ~245 MiB free). Please run the commands above once on a healthy Docker host before relying on them.
+> **Verification status (Docker Desktop 27.4, macOS):** `docker compose up --build` **was run successfully** on the development machine: the production image built, the container ran as a non-root user with a read-only filesystem and reported *healthy*, and the UI and API were served from the same origin (`localhost:8000`) with the bundled snapshot (1,488 of 1,488 intervals matched; MAE 2,126 MW, RMSE 2,621 MW, bias −1,840 MW; CSP and security headers present). A fresh-profile headless-browser session loaded the dashboard, selected an interval, changed the cutoff 09:50 → 09:20 (MAE 2,126 → 2,145 MW) and opened the methodology page with no console errors. **Not verified:** the `dev` and `test` compose profiles (a second image build failed with an I/O error when the host disk filled up; the same suites were run natively instead), and a repeat build after that incident.
 
 ### Tests and quality gates
 
@@ -232,7 +232,7 @@ Errors use one envelope: `{"error": {"code": "VALIDATION_ERROR|OUT_OF_RANGE|NOT_
 - **One winter month.** No seasonal generalisation; tail statistics (P90/P95) are imprecise; scenario buffers are in-sample and descriptive.
 - **Actuals are as served today**; later corrections (if any) are not observable. The WINDFOR publication times in UTC differ between winter and summer and from Elexon's documented list — the app only uses observed `publishTime` values.
 - **Not established:** the BMRS licence text could not be retrieved (Elexon's site blocks automated access). The attribution wording comes from a third-party catalogue and is displayed as unverified (§10).
-- **Docker** unverified on the dev machine (see §4). **Deployment** not yet performed.
+- **Docker:** production compose service verified; dev/test profiles not (see §4). **Deployment** not yet performed.
 
 ---
 
