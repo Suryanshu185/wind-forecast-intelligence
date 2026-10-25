@@ -169,3 +169,67 @@ The 09:30Z vintage is published 20 min *after* a 09:20 cutoff and 20 min *before
 - U-6 Whether FUELHH values are later revised (the API exposes one `publishTime` per interval).
 - U-7 Cross-check reconstruction vs `/forecast/generation/wind/evolution` (not yet called).
 - U-8 Exact BMRS licence attribution text.
+
+---
+
+# Addendum (2026-10-25, implementation phase) — Mandatory pre-implementation investigations
+
+Reproduce with `python3 docs/planning/research/probe_bias_investigation.py` (output: `research/probe_bias_output.txt`).
+The independent series used for diagnostics (B1630 "AGWS", `/generation/actual/per-type/wind-and-solar`, Wind Onshore + Wind Offshore) is used **only here** as a cross-reference; it is **not** part of the application's core analysis.
+
+## 9. Investigation A — does WINDFOR `startTime` identify the beginning or the end of the forecast hour?
+
+**Conclusion: NOT established. The alignment is an unverified assumption and is labelled as such everywhere.**
+
+Evidence examined:
+| Source | What it says | Settles the question? |
+|---|---|---|
+| OpenAPI schema (`WindGenerationForecast`: `publishTime`, `startTime`, `generation`; derived endpoints add `settlementDate`, `settlementPeriod`) | Field named `startTime`; no `endTime`/duration; no description text on any field | No |
+| Operation descriptions for `/datasets/WINDFOR` and the five `/forecast/generation/wind/*` endpoints | "wind generation forecast … for wind farms visible to the ESO and having operational metering … published by NGESO up to 8 times a day"; nothing about averaging interval, hour-beginning/ending, or MW vs MWh | No |
+| Elexon-derived endpoints `/forecast/generation/wind/evolution` and `/latest` (**[V]** called) | Attach `settlementPeriod` to each hourly row: `startTime 2026-01-10T12:00:00Z → settlementPeriod 25` (SP 25 begins 12:00Z); `01:00Z → SP 3`. | Partly: shows how Elexon **labels** the row (by the settlement period that begins at `startTime`). Does not say the forecast value averages `[T, T+60)` rather than `[T−60, T)`. |
+| Developer-portal text; Elexon BMRS API & Data Push User Guide | Portal silent. The User Guide (`elexon.co.uk`) returned HTTP 403 (Cloudflare) to automated access. | Unavailable |
+| NESO source dataset pages | Fetch failed / not reachable | Unavailable |
+| Naming convention across the Insights API | Every other dataset uses `startTime` as interval **start** | Circumstantial only |
+| Empirical error under each alignment | Differs by ≈ 1 % (MAE 2,126 vs 2,069 MW) | **Deliberately not used.** Choosing alignment by lowest error is prohibited. |
+
+Decisions taken (and why they are defensible without inventing certainty):
+1. **Default mapping `hour_alignment = "start"`:** the row stamped `T` is treated as covering `[T, T+60 min)`. Rationale: field name `startTime` and Elexon's own settlement-period labelling — *not* error minimisation. Marked "unverified assumption" in API (`alignment_status: "assumed"`), UI banner/tooltips, methodology and README.
+2. **Sensitivity switch `hour_alignment = "end"`** (row stamped `T` covers `[T−60, T)`) is exposed in the API/UI so a user can see the effect. The default is never changed based on results.
+3. **Native-hourly view:** metrics computed on the forecast's native hourly resolution (actual = mean of the two SPs within the hour; hour counted only if **both** SPs present; no half-hour interpolation). Expected hourly intervals for January = 744.
+4. The 30-minute view applies one hourly forecast to two SPs, and the UI states: *"Hourly forecast shared across two half-hours — not an independent half-hour forecast."* The sample-size caveat (adjacent half-hour errors are dependent) is shown beside 30-minute metrics.
+5. Eligibility guard becomes `publish_utc < start of the hourly interval the row covers` under whichever alignment is selected.
+
+**Materiality:** low for headline metrics (bias differs by 5 MW; MAE by ≈ 3 %), moderate for half-hour error shape. Residual risk: correct alignment could shift intra-day error patterns. Mitigation above; to be disclosed in demo.
+
+## 10. Investigation B — the ≈ −1.8 GW mean signed error
+
+**Conclusion: the evidence points strongly to a SCOPE MISMATCH between FUELHH `WIND` and the wind farms that WINDFOR forecasts, not to a unit error, duplicate handling, cutoff/vintage selection or hour alignment. The cause itself is not proven.**
+
+| Check | Result [V] | Reading |
+|---|---|---|
+| **Units** | FUELHH ÷ B1630(on+off): mean ratio 0.83 (sd 0.05) over 5,902 SPs. A MW-vs-MWh mix-up would give ≈ 0.5 or ≈ 2.0. WINDFOR and FUELHH magnitudes agree to ≈ 15 %. | No unit error evident. |
+| **Dataset coverage** | FUELHH WIND is **below** B1630 wind in **99.9 %** of SPs; mean gap 2.2 GW (sd 1.2 GW), in **every** month Oct 2025–Jan 2026 (−1,969 / −2,147 / −2,280 / −2,249 MW). | FUELHH `WIND` is a systematically narrower series than another BMRS wind-actuals series. |
+| **WINDFOR vs alternative actual** | January: vs FUELHH bias **−1,840 MW**, MAE 2,126, RMSE 2,621; vs B1630 bias **+408 MW**, MAE 1,338, RMSE 1,735. | Most of the bias disappears when the actual series changes; WINDFOR's scale is closer to B1630 than to FUELHH. |
+| **Level dependence** | Bias vs FUELHH grows with output: −1,415 / −1,693 / −2,413 MW (low/mid/high terciles). | Consistent with a proportional scope gap (a missing share of fleet), also with forecast over-prediction at high output. Not separable here. |
+| **Persistence** | Bias vs FUELHH negative in all four months (−1,801 / −1,009 / −1,406 / −1,840 MW). | Not a January-specific event. |
+| **Cutoff / vintage selection** | Bias is negative at **every** lead-time bucket incl. forecasts published after delivery began (e.g. lead [−12,0) h: −1,689 MW; [0,12): −1,579; [36,48): −2,008). Cutoff sweep 09:20→23:59 moved bias only −1,852→−1,714. | Not a vintage-selection / leakage artefact. |
+| **Duplicate handling** | 0 duplicate and 0 conflicting keys in both datasets for the studied windows. | Not a dedupe artefact. |
+| **Hour alignment** | Mean bias −1,840 (begin) vs −1,835 (end). | Alignment does not explain it. |
+
+What **can** be established: the discrepancy is real, persistent, not caused by our algorithm, and mostly attributable to which series is treated as "actual".
+What **cannot** be established: (i) what exactly B1630 and FUELHH include (embedded vs transmission-connected, BM vs non-BM wind, estimation methods) — the docs I could reach do not say; (ii) what exactly WINDFOR includes ("visible to ESO with operational metering" is not a definition of FUELHH-equivalent scope); (iii) how much of the residual is genuine forecast error (the +408 MW bias vs B1630 and MAE 1,338 MW may be a fairer indication, but B1630 is itself an estimate); (iv) curtailment/constraint effects.
+
+**Materiality: HIGH for interpretation, NONE for algorithmic correctness.** The brief mandates FUELHH vs WINDFOR; the algorithm correctly computes errors for that pair. Reporting "the forecast was 1.8 GW too high" as forecast skill would be misleading.
+
+Recommended mitigation (implemented in the plan; no algorithm change to reduce error):
+1. Keep the mandated comparison unchanged.
+2. Show a persistent, specific scope warning: *"FUELHH WIND and WINDFOR may not cover the same generators. In a diagnostic comparison with another BMRS wind-actuals series (B1630), FUELHH WIND was ≈ 2.2 GW lower on average. Bias figures should be read as 'FUELHH vs WINDFOR', not purely forecast skill."* with a link to the research note. This is **static, dated research text with provenance** (not computed by the app, not a metric), and says how it was obtained.
+3. Add bias-independent descriptors so users can separate level offset from variability: error standard deviation (= RMSE with bias removed) and the identity `RMSE² = bias² + std²`. Descriptive only, not a correction.
+4. Do **not** bias-correct the forecast or the actuals. Decision-intelligence buffers are therefore labelled as including the unexplained level offset; the offset is shown separately.
+5. Demo narrative: present this as a discovered data-definition risk and a reason for the methodology page.
+
+## 11. Data licence / reuse check (decision 3)
+- **[D]** Developer-portal terms (fetched): materials may be viewed, downloaded, copied, distributed, modified, transmitted, published, or used to create derivative works for participation in the electricity industry, and "for personal academic or other non-commercial purposes", provided the source is acknowledged and the attribution in the *BMRS Data Licence Terms* is followed; Elexon gives no warranty of accuracy.
+- **[U]** The BMRS Data Licence Terms text itself could not be retrieved (Elexon site blocked automated access, HTTP 403). The attribution string reported by secondary sources is *"Contains BMRS data © Elexon Limited copyright and database right"*; it is used verbatim in the app footer, README and snapshot NOTICE, flagged "verify against the licence before publication".
+- **Assessment:** an unmodified-values, attributed, non-commercial, small (≈ 135 KB) snapshot supporting a hiring-challenge demo appears consistent with the portal terms. **Pre-publication action for the owner:** confirm the licence text; the repository's MIT licence covers original code only (see `LICENSE`/`NOTICE`).
+- Provenance recorded per snapshot (`manifest.json`): source endpoints and full query strings, retrieval timestamp (UTC), period covered, row counts, SHA-256 per file, tool version, `is_synthetic: false`, limitations list.

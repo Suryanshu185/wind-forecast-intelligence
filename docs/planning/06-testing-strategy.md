@@ -28,7 +28,7 @@ Each synthetic file includes a top-level `_synthetic_notice` explaining it is in
 ### Unit — `normalise`
 - Parses ISO `Z` timestamps; rejects naive and offset strings; counts `rejected_rows`.
 - `null` generation → missing (not 0); `0` preserved.
-- Exact-duplicate collapse; conflicting duplicates under `min` and `exclude` policies; deterministic regardless of input order (parametrised over permutations).
+- Exact-duplicate collapse; conflicting duplicates under `exclude` and `strict` policies (conflicts preserved in the `conflicts` list, counted, flagged on affected intervals; never silently resolved); deterministic regardless of input order (parametrised over permutations).
 - Off-grid forecast `startTime` (minute ≠ 0) excluded and counted.
 - Negative values counted and kept.
 - settlementDate vs London-date consistency counter.

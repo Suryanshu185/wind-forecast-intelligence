@@ -37,26 +37,38 @@ Normalised record: `(start_utc, publish_utc, mw: float | None)`.
 ### 2.3 Duplicate and conflict handling (deterministic)
 Natural keys: actuals `(start_utc)`; forecasts `(start_utc, publish_utc)`.
 1. **Exact duplicates** (same key, same `mw`): collapse to one row; count `duplicate_rows_collapsed`.
-2. **Conflicting duplicates** (same key, different `mw`): apply `DUPLICATE_CONFLICT_POLICY`:
-   - `min` (default): keep the row with the **lowest** `mw` (conservative for procurement: lower expected wind → higher residual need). `None` loses to any number.
-   - `exclude`: drop all rows for that key; the interval becomes missing.
-   Count `conflicting_keys` and return up to N examples in the data-quality payload. Never silent.
+2. **Conflicting duplicates** (same key, different `mw`; *revised 2026-10-25 per approved decision 7 — no value is ever silently chosen*). The conflicting records are **never merged or picked between**. They are:
+   - removed from the usable dataset (the key is treated as having no trustworthy value), **and**
+   - preserved verbatim in a `conflicts` list (key, dataset, all conflicting values, row count) that is stored with the snapshot-derived dataset, counted (`conflicting_keys`, `conflicting_rows`) and exposed through `/data-quality` and the UI data-quality panel; every interval affected is flagged `conflict_affected = true`.
+   `DUPLICATE_CONFLICT_POLICY` controls only what an *affected forecast interval* does:
+   - `exclude` (default): the conflicted vintage is ignored and selection proceeds to the next-latest eligible vintage; the interval is flagged and counted (`intervals_with_conflict_fallback`). For actuals the interval is `ACTUAL_MISSING` (flagged).
+   - `strict`: if the **latest eligible vintage** is conflicted, the interval is `FORECAST_UNAVAILABLE` with reason `conflict` (we cannot know what the trader saw). Nothing falls back silently.
+   Both rules are deterministic (independent of input order). Observed in real January data: 0 conflicts, so neither policy changes any published number; both are exercised by synthetic fixtures.
 3. Actuals with several rows for the same `start_utc` but different `publish_utc` (revisions): keep the **latest `publish_utc`**; ties fall to rule 2. (None observed — the API returns one row per interval.)
 4. Result: at most one row per natural key, sorted by key. API response order is irrelevant (tested with shuffled input).
 
 Observed in real January data: **0 duplicates, 0 conflicts**. The rules are exercised by synthetic fixtures (clearly named `synthetic_*`).
+
+### 2.4 Hour alignment of WINDFOR rows (UNVERIFIED ASSUMPTION — see 04-notes §9)
+A WINDFOR row stamped `T` is hourly. Official sources do not state whether it describes `[T, T+60)` or `[T−60, T)`.
+- `hour_alignment = "start"` (**default, assumed, not verified**): row `T` covers `[T, T+60 min)`.
+- `hour_alignment = "end"` (sensitivity only): row `T` covers `[T−60 min, T)`.
+The default was chosen from the field name `startTime` and Elexon's settlement-period labelling, **not** from error statistics. Every analytic response carries `hour_alignment` and `alignment_status: "assumed"`; the UI states this next to every number.
+Define `hour_interval(s)` = the hourly forecast interval containing SP `s` under the chosen alignment, and `row_stamp(s)` = the `startTime` of the WINDFOR row that describes it (`floor_hour(s)` for "start"; `floor_hour(s) + 60 min` for "end").
 
 ## 3. Forecast-vintage selection (core algorithm)
 
 For each delivery SP `s` (UTC start) on delivery date `D = london_date(s)`:
 
 ```
-slot(s)      = s floored to the hour
+slot(s)      = row_stamp(s)                       # §2.4; floor_hour(s) under the default alignment
+hstart(s)    = start of hour_interval(s)          # == slot(s) ("start") or slot(s) − 60 min ("end")
 cutoff(D)    = C(D) − L
 eligible(s)  = { f ∈ forecasts :  f.start_utc == slot(s)
                               AND f.publish_utc ≤ cutoff(D)
-                              AND f.publish_utc <  slot(s)       # guard: forecast must pre-date its delivery slot
-                              AND f.mw is not None }
+                              AND f.publish_utc <  hstart(s)     # guard: forecast must pre-date the hour it describes
+                              AND f.mw is not None
+                              AND (policy == "strict" OR f not conflicted) }
 if eligible(s) is empty:
       status = FORECAST_UNAVAILABLE ; forecast_mw = None
 else:
@@ -69,10 +81,12 @@ else:
 Rules:
 - **Eligibility uses `publishTime` only.** `startTime` selects the target and is never compared with the cutoff.
 - A vintage published exactly at the cutoff is **eligible** (`≤`).
-- Rows with `publish_utc ≥ slot(s)` (back-cast rows, observed lead time down to −25.5 h) are never eligible. This does not bind at D−1 cutoffs but protects `days_before = 0` configurations.
+- Rows with `publish_utc ≥ hstart(s)` (back-cast rows, observed lead time down to −25.5 h) are never eligible. This does not bind at D−1 cutoffs but protects `days_before = 0` configurations.
+- Under `strict`, if the latest eligible vintage (conflicted or not) is conflicted, the status is `FORECAST_UNAVAILABLE` with `unavailable_reason = "conflict"`; the selection step first considers conflicted rows, and only then decides (§2.3).
 - After §2.3 `(start, publish)` is unique, so `argmax` is unique: no dependence on API order or wall clock.
 - Selection is per forecast slot. All slots of a day normally come from one vintage because each observed vintage spans 73 consecutive hours, but nothing assumes it; the UI shows the publish time per interval.
-- **Hourly → half-hourly mapping:** the selected hourly value applies to *both* SPs starting at `T` and `T+30m` (assumption A-4). The response carries `forecast_slot_start` and a resolution note so the UI states that two half-hours share one forecast. Optional later: native hourly metrics (mean of the two actual SPs).
+- **Hourly → half-hourly mapping (30-minute view):** the selected hourly value is applied to *both* SPs inside `hour_interval(s)` (assumption A-4, alignment §2.4). It is **not** an independently observed half-hour forecast. Each interval row carries `forecast_row_start`, `forecast_shared_across_sps = 2`, and the response carries a `resolution_note`; the UI repeats it.
+- **Native-hourly view** (approved decision 2): see §4.2.
 - No eligible forecast → the SP is **unavailable** (`forecast_mw = null`), never zero.
 
 ### 3.1 Status taxonomy (per SP)
@@ -115,6 +129,16 @@ Rules:
 - **Largest errors:** top *k* (default 10) matched SPs by `e_i` descending (largest under-forecasts) and ascending (largest over-forecasts); ties → earlier `start_utc`. Nice-to-have: **worst contiguous windows** — rolling mean of `e` over *w* consecutive, fully matched SPs (default 6 = 3 h), top *k* non-overlapping.
 - **Elevated-error days:** daily RMSE ≥ P75 of the month's daily RMSEs (configurable), requiring ≥ 80 % daily coverage. Labelled "elevated relative to this period".
 
+### 4.0 Bias-decomposition descriptors (added after Investigation B)
+| Metric | Formula | Notes |
+|---|---|---|
+| Error std (bias-removed spread) | `√((1/n) Σ (e_i − ē)²)` (population, ddof = 0) | `RMSE² = Bias² + Std²` holds exactly (tested). Descriptive only — **no bias correction is applied anywhere**. |
+| Mean actual / mean forecast | `mean(A_i)`, `mean(F_i)` over matched | Context for bias scale. |
+
+### 4.2 Native-hourly view
+Unit of comparison = one WINDFOR hourly interval `h` (`hour_interval`). `A_h` = mean of the two SP actuals inside `h`, **computed only when both SPs are present and non-null** (otherwise the hour is `ACTUAL_MISSING`; half-hours are never filled or interpolated). `F_h` = selected forecast for `h` (same eligibility rules). Expected hourly intervals = number of whole hours in the delivery range (744 for January 2026; on clock-change days 23/25 where hours align to UTC). All metrics (§4) are defined identically over matched hours with `expected_hours`, `matched_hours`, `coverage_hours`. Because the two half-hours share one forecast value, the hourly view is the statistically honest sample size for forecast skill. Both views are always labelled with their resolution.
+Expected hourly intervals are the UTC hours fully inside the London-date range `[local_midnight(D_start), local_midnight(D_end+1))`; a half-hour at a range edge on a clock-change day that does not form a full UTC hour is excluded from the hourly view and counted (`partial_hour_sps`).
+
 ### 4.1 Worked example (golden unit test)
 Matched (A, F) in MW: (100,90), (80,100), (0,10), (50,50).
 `e = [10, −20, −10, 0]` → MAE = 10; RMSE = √((100+400+100+0)/4) = √150 ≈ 12.2474; Bias = −5;
@@ -149,4 +173,7 @@ Nominal-schedule checks (e.g. "8 vintages/day") are informational only, derived 
 7. In-sample buffers are descriptive, not guarantees.
 
 ## 8. Request configuration (validated; 422 on invalid)
-`cutoff_time` (HH:MM), `timezone` (IANA; default Europe/London), `days_before` (0–3; default 1), `availability_lag_minutes` (0–720; default 0), `delivery_start`/`delivery_end` (within the permitted window; start ≤ end), `conflict_policy`, `confidence_levels`, `top_k`, `histogram_bin_mw`.
+`cutoff_time` (HH:MM), `timezone` (IANA; default Europe/London), `days_before` (0–3; default 1), `availability_lag_minutes` (0–720; default 0), `delivery_start`/`delivery_end` (within the permitted window; start ≤ end), `resolution` (`half_hour` default | `hourly`), `hour_alignment` (`start` default, assumed | `end` sensitivity), `conflict_policy` (`exclude` default | `strict`), `confidence_levels`, `top_k`, `histogram_bin_mw`.
+
+### 8.1 Cutoff presets are assumptions, not market facts (approved decision 1)
+Presets: **09:50** (provisional default; Nord Pool N2EX page dated 2022), **09:20** and **15:30** (secondary/unverified EPEX references). The UI labels them "configurable assumptions — not verified market deadlines" and the methodology page explains that no authoritative, current gate-closure confirmation was obtained.

@@ -1,0 +1,34 @@
+# retrieved (UTC): 2026-10-25T10:53:02Z
+
+== 1. Scale / units: FUELHH WIND vs B1630 (onshore+offshore), same SP
+n=5902 | mean FUELHH 10652 MW | mean B1630 12813 MW
+ratio FUELHH/B1630: mean 0.832 sd 0.050 min 0.269 max 1.057  (a MW-vs-MWh unit error would give ~0.5 or ~2.0)
+share of SPs with FUELHH < B1630: 0.9990
+B1630 - FUELHH (MW): mean 2161 sd 1216 min -487 max 14439
+
+== 2/3. By month: selected WINDFOR (cutoff 09:50 D-1, hour-beginning) vs each actual series (MW)
+month | n | FUELHH | B1630 | WINDFOR | FUELHH-B1630 | bias vs FUELHH | bias vs B1630
+2025-10 | 1487 | 8927 | 10895 | 10728 | -1969 | -1801 | 167
+2025-11 | 1440 | 11004 | 13151 | 12014 | -2147 | -1009 | 1138
+2025-12 | 1487 | 11105 | 13385 | 12511 | -2280 | -1406 | 874
+2026-01 | 1488 | 11581 | 13829 | 13421 | -2249 | -1840 | 408
+Jan: WINDFOR vs FUELHH: n=1488 MAE 2126 RMSE 2621 bias -1840
+Jan: WINDFOR vs B1630: n=1488 MAE 1338 RMSE 1735 bias 408
+  FUELHH-level tercile 1: mean 6609 | bias vs FUELHH -1415 | bias vs B1630 -338
+  FUELHH-level tercile 2: mean 12185 | bias vs FUELHH -1693 | bias vs B1630 612
+  FUELHH-level tercile 3: mean 15948 | bias vs FUELHH -2413 | bias vs B1630 950
+
+== 4. Bias vs lead time of ALL vintages (Jan, vs FUELHH hourly mean) - is it a cutoff artefact?
+  lead [-36,-24) h: n=62 bias -1721 MW
+  lead [-24,-12) h: n=1024 bias -1952 MW
+  lead [-12,0) h: n=2635 bias -1689 MW
+  lead [0,12) h: n=2976 bias -1579 MW
+  lead [12,24) h: n=2976 bias -1815 MW
+  lead [24,36) h: n=2976 bias -1836 MW
+  lead [36,48) h: n=2945 bias -2008 MW
+  lead [48,60) h: n=2076 bias -1585 MW
+  lead [60,72) h: n=434 bias -895 MW
+
+== 5. Alignment sensitivity of the MEAN bias vs FUELHH (reported only; NOT used to choose an alignment)
+  hour-beginning mapping: n=1488 bias -1840 MW MAE 2126 MW
+  hour-ending mapping: n=1488 bias -1835 MW MAE 2069 MW

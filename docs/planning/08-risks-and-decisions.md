@@ -10,7 +10,7 @@
 | **D-4** | Deployment platform | A Render Docker (recommended) / B Vercel / C split | **A**, spike early; fall back to B | Cold-start vs fidelity trade-off (see `07`). Requires your account/approval. |
 | **D-5** | Availability-lag parameter | Include (default 0) / omit | **Include** | `publishTime` may not equal when a trader could act; lets the user test sensitivity. |
 | **D-6** | Git author identity | Your global identity / anonymous placeholder | **Anonymous placeholder** (see below) | Public repo must be non-identifying; rewriting history later is prohibited. |
-| **D-7** | Conflict policy default | `min` (conservative) / `exclude` | **`min`** | No conflicts exist in real January data, so impact is nil here; matters for rule completeness. |
+| **D-7** | Conflict policy | ~~`min`~~ superseded | **Approved: no silent resolution.** Conflicting records removed from usable data, preserved + counted + observable; `exclude` (default) / `strict` policies for affected intervals (methodology §2.3) | No conflicts exist in real January data; matters for rule completeness. |
 | **D-8** | Repository name | see §3 | `fennel-ridge-q7k3` | Anonymous & random; availability on GitHub **unverified**. |
 | **D-9** | Does planning time count toward the 16 h? | Yes / No | Assume **No** (implementation clock starts on approval) | Plan allocates exactly 16.0 h to implementation. |
 | **D-10** | Scope of Decision view | Full P1 view / minimal buffer table | **Full P1**, cut per `03` if behind | Differentiator, but risk of over-claiming; wording is controlled. |
@@ -52,3 +52,28 @@ Likelihood (L) / Impact (I): H, M, L.
 ## 4. Open data questions (from `04`)
 U-1 asset coverage · U-2 hour alignment · U-3 documented schedule time zone · U-4 authoritative gate closure · U-5 rate limits/retention · U-6 FUELHH revisions · U-7 `/evolution` cross-check · U-8 licence wording.
 Planned handling: U-7 can be closed in M1 (≈ 15 min) by comparing our vintage reconstruction with `/forecast/generation/wind/evolution` for a few slots; U-1/U-2/U-4 cannot be resolved from public docs and remain disclosed limitations.
+
+---
+
+## 5. Approval record (2026-10-25 16:18 IST) and resulting changes
+
+| # | Approved decision | Where reflected |
+|---|---|---|
+| 1 | Provisional default cutoff 09:50 Europe/London on D−1; configurable; 09:20/15:30 presets; labelled assumptions, not verified market deadlines | methodology §8.1, UI copy |
+| 2 | 30-minute analysis **and** native-hourly view; hourly forecast never presented as independent half-hour forecasts | methodology §2.4, §3, §4.2 |
+| 3 | Real snapshot allowed after licence/attribution/provenance/size checks | 04-notes §11; manifest + NOTICE |
+| 4 | Render as initial target, subject to verifying current capabilities/free-tier behaviour | verified again in M7 before `render.yaml` is finalised |
+| 5 | Configurable availability lag, default 0 | methodology §1 |
+| 6 | Anonymous Git author via `git -c`, global config untouched | every commit |
+| 7 | No silent lowest-value resolution; conflicts observable | methodology §2.3 |
+| 8 | Planning time tracked separately; report hours by milestone | `time-log.md` |
+| 9 | MIT licence for original code only; does not override Elexon data terms | `LICENSE`, `NOTICE` |
+| 10 | Repo name `fennel-ridge-q7k3`; do **not** create/publish without approval | not created |
+
+New risks from Investigations A/B:
+| ID | Risk | L | I | Mitigation |
+|---|---|---|---|---|
+| R-19 | Hour alignment unverified (U-2) | H | L–M | Assumption labelled everywhere; `end` sensitivity switch; native-hourly view; never tuned to error |
+| R-20 | **Scope mismatch FUELHH WIND vs WINDFOR (diagnostic: FUELHH ≈ 2.2 GW below B1630; bias vs FUELHH −1.84 GW, vs B1630 +0.41 GW)** misread as forecast skill | H | H | Persistent scope warning with figures and provenance; std/bias decomposition; no bias correction; documented in demo |
+| R-21 | Elexon licence text not retrievable (403) | M | M | Attribution used verbatim; owner to verify before publication; snapshot flagged accordingly |
+| R-22 | **Docker daemon not running; disk 389 MiB free** | H | H | Resolve before M0 installs (see M0 report) |
