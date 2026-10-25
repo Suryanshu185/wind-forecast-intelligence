@@ -431,7 +431,7 @@ def test_revisions_errors(real: TestClient) -> None:
 def test_scenarios_are_labelled_and_never_claim_money_or_volume(real: TestClient) -> None:
     r = real.get("/api/v1/uncertainty/scenarios", params={"include_rolling": "true"})
     s = j(r)
-    assert "not a purchase recommendation" in s["disclaimer"]
+    assert "not a purchase or trading recommendation" in s["disclaimer"]
     buf = [b["buffer_mw"] for b in s["buffers"]]
     assert (
         [b["confidence_pct"] for b in s["buffers"]] == [50, 80, 90, 95]
@@ -524,3 +524,49 @@ def test_spa_is_served_with_csp_and_path_traversal_is_blocked(tmp_path: Any) -> 
         missing_api = c.get("/api/v1/does-not-exist")
         assert missing_api.status_code == 404 and missing_api.json()["error"]["code"] == "NOT_FOUND"
         assert "content-security-policy" not in c.get("/api/v1/health").headers
+
+
+# ------------------------------------------------------------------ pre-release review: disclosure on every payload
+def test_scope_notice_is_present_on_every_analytic_payload(real: TestClient) -> None:
+    urls = [
+        "/api/v1/analysis/summary",
+        "/api/v1/analysis/intervals",
+        "/api/v1/uncertainty/scenarios",
+        "/api/v1/intervals/2026-01-10T10:00:00Z/revisions",
+    ]
+    for u in urls:
+        body = j(real.get(u))
+        assert "may not cover the same generators" in body["scope_notice"], u
+        assert (
+            "pure forecast skill" in body["scope_notice"] and "shortfall" in body["scope_notice"]
+        ), u
+    assert "scope_diagnostic" in j(real.get("/api/v1/data-quality")) and "scope_diagnostic" in j(
+        real.get("/api/v1/meta")
+    )
+
+
+def test_attribution_is_flagged_unverified_and_never_called_official(real: TestClient) -> None:
+    meta = j(real.get("/api/v1/meta"))
+    assert meta["attribution"].startswith("Contains BMRS data")
+    assert "Unverified" in meta["attribution_status"] and "official" in meta["attribution_status"]
+    assert "Unverified" in meta["provenance"]["attribution_status"]
+    assert (
+        "NOT covered" in meta["provenance"]["licence_note"]
+        or "not covered" in meta["provenance"]["licence_note"].lower()
+    )
+
+
+def test_scenarios_are_labelled_illustrative_and_not_trading_advice(real: TestClient) -> None:
+    s = j(real.get("/api/v1/uncertainty/scenarios"))
+    assert s["disclaimer"].startswith("Illustrative")
+    assert "not a purchase or trading recommendation" in s["disclaimer"]
+
+
+def test_every_cutoff_preset_is_a_labelled_assumption(real: TestClient) -> None:
+    meta = j(real.get("/api/v1/meta"))
+    assert all(p["status"] == "configurable_assumption" for p in meta["cutoff_presets"])
+    s = j(real.get("/api/v1/analysis/summary"))
+    assert (
+        s["cutoff"]["status"] == "configurable_assumption"
+        and "not a verified market deadline" in s["cutoff"]["description"]
+    )

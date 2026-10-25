@@ -145,6 +145,9 @@ export function ControlBar({
               onChange={(e) => /^\d{2}:\d{2}$/.test(e.target.value) && onChange({ cutoff_time: e.target.value })}
             />
           </div>
+          <p className="mt-1 max-w-[18rem] text-[11px] leading-snug text-muted" data-testid="cutoff-assumption-note">
+            Presets are configurable assumptions — not verified market deadlines.
+          </p>
         </div>
 
         <div>

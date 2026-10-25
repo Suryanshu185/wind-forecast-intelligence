@@ -9,18 +9,27 @@ LICENSING NOTICE
    Any Elexon data in this repository (e.g. files under data/snapshots/) is
    third-party material. It remains subject to Elexon's BMRS Data Licence Terms
    and the Insights Solution API terms of use, not to the MIT licence.
-   The MIT licence does not grant any rights over that data and does not
-   override Elexon's terms.
+   The MIT licence does not grant any rights over that data, does not
+   relicense it, and does not override Elexon's terms.
 
-   Required attribution (wording as reported by secondary sources; verify
-   against the current BMRS Data Licence Terms before publication):
+   Attribution: Elexon's developer portal states that material may be reused
+   for industry participation or non-commercial purposes provided the source
+   is acknowledged and the attribution in the BMRS Data Licence Terms is
+   followed. Those licence terms could NOT be retrieved (the Elexon site
+   returned HTTP 403 to automated access), so the exact official attribution
+   wording is UNVERIFIED. The wording used by this project, as reported by a
+   third-party API catalogue (apis.io), is:
 
-     Contains BMRS data (c) Elexon Limited copyright and database right.
+     Contains BMRS data (c) Elexon Limited copyright and database right
+
+   Do not treat that line as an official Elexon statement. Verify it against
+   the current licence terms before relying on this repository publicly, and
+   correct it if needed.
 
    Source: Elexon Insights Solution API (https://data.elexon.co.uk/bmrs/api/v1),
    datasets FUELHH and WINDFOR. Provenance, retrieval time, period covered and
-   limitations are recorded in data/snapshots/manifest.json. Elexon accepts no
-   liability for errors or omissions in the data.
+   limitations are recorded in data/snapshots/manifest.json. Elexon's portal
+   states that it accepts no liability for errors or omissions in the data.
 
 3. Third-party software
    Dependencies retain their own licences; see the lockfiles

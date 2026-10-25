@@ -153,7 +153,8 @@ class AnalysisService:
             data_sha256=p.data_sha256,
             period_covered=man["period_covered"],
             sources=man["sources"],
-            attribution=man["attribution"],
+            attribution=content.ATTRIBUTION,
+            attribution_status=content.ATTRIBUTION_STATUS,
             licence_note=man["licence_note"],
             limitations=man["limitations"],
             notice=man.get("notice"),
@@ -350,7 +351,8 @@ class AnalysisService:
             conflict_policies=content.CONFLICT_POLICIES,
             datasets=content.DATASETS,
             provenance=self.provenance(),
-            attribution=self.data.provenance.manifest["attribution"],
+            attribution=content.ATTRIBUTION,
+            attribution_status=content.ATTRIBUTION_STATUS,
             scope_diagnostic=content.SCOPE_DIAGNOSTIC,
             error_convention=content.ERROR_CONVENTION,
         )
@@ -359,6 +361,7 @@ class AnalysisService:
         cfg = self.resolve(q)
         res = self.analyse(cfg)
         return m.SummaryOut(
+            scope_notice=content.SCOPE_NOTICE,
             config=self.resolved(cfg),
             provenance=self.provenance(),
             alignment=self._alignment(cfg),
@@ -415,6 +418,7 @@ class AnalysisService:
         cfg = self.resolve(q)
         res = self.analyse(cfg)
         return m.IntervalsOut(
+            scope_notice=content.SCOPE_NOTICE,
             config=self.resolved(cfg),
             provenance=self.provenance(),
             alignment=self._alignment(cfg),
@@ -476,6 +480,7 @@ class AnalysisService:
             if c.dataset == "WINDFOR" and c.start_utc == stamp and c.publish_utc is not None
         ]
         return m.RevisionsOut(
+            scope_notice=content.SCOPE_NOTICE,
             config=self.resolved(cfg),
             interval=self.interval_out(row),
             forecast_row_start=stamp,
@@ -572,6 +577,7 @@ class AnalysisService:
             return [m.BucketOut(label=b.label, metrics=self.metrics_out(b.metrics)) for b in xs]
 
         return m.ScenariosOut(
+            scope_notice=content.SCOPE_NOTICE,
             config=self.resolved(cfg),
             provenance=self.provenance(),
             disclaimer=sc.DISCLAIMER,

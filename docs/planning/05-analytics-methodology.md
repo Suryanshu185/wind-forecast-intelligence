@@ -147,7 +147,7 @@ P90|e|: sorted |e| = 0, 10, 10, 20 → position 0.9×3 = 2.7 → 10 + 0.7×(20�
 
 ## 5. Decision-intelligence analytics (illustrative)
 
-Label everywhere: **"Analytical scenario based on historical forecast errors. Not a purchase recommendation."**
+Label everywhere: **"Illustrative analytical scenario based on historical forecast errors. Not a purchase or trading recommendation."**
 There is no demand, contract, other-generation or price data, so the app never outputs a shortfall, optimal volume, cost, saving or profit.
 
 Define **wind under-delivery** `u_i = F_i − A_i = −e_i` (positive when wind came in below forecast — the risk direction for a buyer relying on the forecast).

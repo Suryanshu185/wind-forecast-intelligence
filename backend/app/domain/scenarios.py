@@ -1,6 +1,6 @@
 """Illustrative uncertainty scenarios from historical forecast errors (methodology §5).
 
-These are ANALYTICAL SCENARIOS, not purchase recommendations. There is no demand, contract, other-generation or
+These are ILLUSTRATIVE ANALYTICAL SCENARIOS, not purchase or trading recommendations. There is no demand, contract, other-generation or
 price data, so nothing here is a shortfall, an optimal volume, a cost, a saving or a profit.
 
 u = forecast - actual = -error  ("wind under-delivery"; positive when wind came in below the forecast).
@@ -22,8 +22,8 @@ from app.domain.metrics import Metrics, compute_metrics
 
 DEFAULT_LEVELS = (50, 80, 90, 95)
 DISCLAIMER = (
-    "Analytical scenario based on historical forecast errors in a single month. "
-    "It is not a purchase recommendation and does not estimate any shortfall, volume, cost or saving."
+    "Illustrative analytical scenario based on historical forecast errors in a single month. "
+    "It is not a purchase or trading recommendation and does not estimate any shortfall, volume, cost or saving."
 )
 
 

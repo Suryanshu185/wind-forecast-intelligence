@@ -1,5 +1,6 @@
 {
-  "attribution": "Contains BMRS data (c) Elexon Limited copyright and database right.",
+  "attribution": "Contains BMRS data © Elexon Limited copyright and database right",
+  "attribution_status": "Unverified: wording reported by a third-party API catalogue; Elexon's licence text could not be retrieved.",
   "data_sha256": "a4e5f8b3846eda775f6eb0cec9324a98d68c6bc4dbe373a476ff5d2df3f5d2e4",
   "description": "Verbatim Elexon Insights API rows (FUELHH WIND actuals, WINDFOR forecast vintages).",
   "files": {

@@ -52,6 +52,7 @@ class ProvenanceOut(BaseModel):
     period_covered: dict[str, str]
     sources: list[dict[str, object]]
     attribution: str
+    attribution_status: str
     licence_note: str
     limitations: list[str]
     notice: str | None = None
@@ -154,6 +155,7 @@ class ExtremeOut(BaseModel):
 
 
 class SummaryOut(BaseModel):
+    scope_notice: str
     config: ResolvedConfig
     provenance: ProvenanceOut
     alignment: AlignmentInfo
@@ -196,6 +198,7 @@ class IntervalOut(BaseModel):
 
 
 class IntervalsOut(BaseModel):
+    scope_notice: str
     config: ResolvedConfig
     provenance: ProvenanceOut
     alignment: AlignmentInfo
@@ -222,6 +225,7 @@ class ConflictedVintageOut(BaseModel):
 
 
 class RevisionsOut(BaseModel):
+    scope_notice: str
     config: ResolvedConfig
     interval: IntervalOut
     forecast_row_start: datetime
@@ -269,6 +273,7 @@ class RollingOut(BaseModel):
 
 
 class ScenariosOut(BaseModel):
+    scope_notice: str
     config: ResolvedConfig
     provenance: ProvenanceOut
     disclaimer: str
@@ -326,6 +331,7 @@ class MetaOut(BaseModel):
     datasets: list[dict[str, str]]
     provenance: ProvenanceOut
     attribution: str
+    attribution_status: str
     scope_diagnostic: dict[str, object]
     error_convention: str
 

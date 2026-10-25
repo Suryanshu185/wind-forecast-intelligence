@@ -13,6 +13,7 @@ import {
   UNAVAILABLE,
   ZERO_ACTUAL,
   counts,
+  makeDataQuality,
   metrics,
 } from "./fixtures.synthetic";
 
@@ -356,7 +357,7 @@ describe("decision intelligence", () => {
   it("always shows the scenario disclaimer and never claims money or volume", async () => {
     mockApi();
     const { container } = renderApp("/?tab=decision");
-    expect(await screen.findByTestId("scenario-disclaimer")).toHaveTextContent(/not a purchase recommendation/i);
+    expect(await screen.findByTestId("scenario-disclaimer")).toHaveTextContent(/not a purchase or trading recommendation/i);
     expect(screen.getByTestId("buffer-table")).toHaveTextContent("50%");
     expect(screen.getByTestId("buffer-table")).toHaveTextContent("400 MW");
     expect(screen.getByTestId("level-offset")).toHaveTextContent("−120 MW");
@@ -401,5 +402,78 @@ describe("cutoff change reaches the explorer too", () => {
     await user.selectOptions(screen.getByRole("combobox", { name: /Decision cutoff/ }), "15:30");
     await waitFor(() => expect(api.byPath("/analysis/intervals").some((u) => u.searchParams.get("cutoff_time") === "15:30")).toBe(true));
     expect(screen.getByTestId("forecast-chart")).toBeInTheDocument();
+  });
+});
+
+
+describe("pre-release disclosure review", () => {
+  it("shows the dataset-scope caveat on the dashboard, every tab and the methodology page", async () => {
+    for (const route of ["/", "/?tab=accuracy", "/?tab=decision"]) {
+      mockApi();
+      renderApp(route);
+      expect(await screen.findByTestId("scope-banner")).toHaveTextContent(/may not cover the same generators/i);
+      cleanup();
+    }
+    mockApi();
+    renderApp("/methodology");
+    expect(await screen.findByText(/Dataset scope: FUELHH WIND versus WINDFOR/)).toBeInTheDocument();
+    expect(screen.getByText(/Not established/)).toBeInTheDocument();
+  });
+
+  it("never presents errors as pure model skill or as a procurement shortfall", async () => {
+    mockApi();
+    renderApp("/?tab=accuracy");
+    expect(await screen.findByTestId("scope-reminder")).toHaveTextContent(/pure forecast skill or as evidence of a procurement shortfall/);
+    expect(screen.getByTestId("scope-banner")).toHaveTextContent(/not pure forecast skill/i);
+  });
+
+  it("repeats the scope caveat in the decision view and labels scenarios illustrative", async () => {
+    mockApi();
+    renderApp("/?tab=decision");
+    expect(await screen.findByTestId("scenario-disclaimer")).toHaveTextContent(/Illustrative analytical scenario/);
+    expect(screen.getByTestId("scenario-disclaimer")).toHaveTextContent(/not a purchase or trading recommendation/);
+    expect(screen.getByTestId("scope-reminder")).toHaveTextContent(/may not cover the same generators/);
+    expect(screen.getByText(/Illustrative uncertainty buffers/)).toBeInTheDocument();
+  });
+
+  it("labels cutoff presets as assumptions next to the control", async () => {
+    mockApi();
+    renderApp();
+    expect(await screen.findByTestId("cutoff-assumption-note")).toHaveTextContent(/configurable assumptions — not verified market deadlines/);
+    expect(await screen.findByTestId("data-strip")).toHaveTextContent(/configurable assumption, not a verified market deadline/);
+  });
+
+  it("labels the default hour alignment unverified, and the alternative as a sensitivity", async () => {
+    mockApi();
+    const user = userEvent.setup();
+    renderApp();
+    expect(await screen.findByTestId("warning-ALIGNMENT_ASSUMED")).toHaveTextContent(/unverified/i);
+    await user.click(screen.getByRole("button", { name: /Assumptions & sensitivity/ }));
+    expect(screen.getByText(/unverified assumption/i)).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Hour ending at startTime \(sensitivity\)/ })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Hour starting at startTime \(assumed\)/ })).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("flags the attribution wording as unverified in the footer and methodology page", async () => {
+    mockApi();
+    renderApp();
+    expect(await screen.findByTestId("attribution")).toHaveTextContent(/official licence wording has not been verified/i);
+    cleanup();
+    mockApi();
+    renderApp("/methodology");
+    expect(await screen.findByText(/Unverified:/)).toBeInTheDocument();
+    expect(screen.getByText(/not covered by this project’s MIT licence/)).toBeInTheDocument();
+  });
+
+  it("keeps conflicts visible in the data-quality section", async () => {
+    mockApi({
+      quality: () => makeDataQuality({
+        conflict_total: 1,
+        conflicts: [{ dataset: "WINDFOR", start_utc: "2026-01-02T10:00:00Z", publish_utc: "2026-01-01T09:30:00Z", values_mw: [1100, 1111], row_count: 2 }],
+      }),
+    });
+    renderApp("/methodology");
+    expect(await screen.findByTestId("conflict-list")).toHaveTextContent(/1100,1111/);
+    expect(screen.getByText(/1 key\(s\) are listed below and excluded/)).toBeInTheDocument();
   });
 });

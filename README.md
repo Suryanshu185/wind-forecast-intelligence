@@ -14,11 +14,11 @@ It answers three questions a procurement team would ask:
 |---|---|
 | **Live deployment** | _Not deployed yet — awaiting the owner's approval._ (URL will be added here.) |
 | **Stack** | React 19 + TypeScript · Python 3.12 + FastAPI · pandas/NumPy · Docker/Compose |
-| **Tests** | 242 backend (pytest) · 41 frontend (Vitest + Testing Library) |
+| **Tests** | 256 backend (pytest) · 48 frontend (Vitest + Testing Library) |
 
 ![Forecast Explorer](docs/images/explorer.jpg)
 
-_Screenshots show real Elexon data from the committed snapshot. A "SYNTHETIC DEVELOPMENT FIXTURE" badge replaces the green "Real Elexon BMRS data" badge whenever synthetic data is in use._
+_Screenshots show real Elexon data from the committed snapshot (taken before the final wording changes; the attribution footer now flags its wording as unverified). A "SYNTHETIC DEVELOPMENT FIXTURE" badge replaces the green "Real Elexon BMRS data" badge whenever synthetic data is in use._
 
 <details><summary>More screenshots</summary>
 
@@ -208,6 +208,8 @@ Base path `/api/v1`. All analytic endpoints accept the same optional query param
 | `GET /uncertainty/scenarios` | illustrative buffers, bands, breakdowns, out-of-sample check — always with the scenario disclaimer |
 | `GET /data-quality` | normalisation counters, conflicts, observed anomalies, assumptions, limitations, provenance |
 
+Every analytic payload (`summary`, `intervals`, `revisions`, `scenarios`) carries a `scope_notice` field repeating the FUELHH/WINDFOR scope caveat; `/meta` carries the full diagnostic and the (unverified) attribution status.
+
 Errors use one envelope: `{"error": {"code": "VALIDATION_ERROR|OUT_OF_RANGE|NOT_FOUND|DATA_UNAVAILABLE|INTERNAL", "message": "...", "details": [...]}}`. Interactive documentation is served at `/docs`.
 
 ---
@@ -216,7 +218,7 @@ Errors use one envelope: `{"error": {"code": "VALIDATION_ERROR|OUT_OF_RANGE|NOT_
 
 - **Forecast Explorer** — actual vs the forecast known at the cutoff; click or arrow-key through intervals; the inspector shows publication time, lead time, signed error, *why this vintage was selected*, and a revision timeline with the cutoff marked. Unavailable forecasts and missing actuals are hatched gaps with their own legend entries, never zeros. A table view mirrors the chart.
 - **Accuracy analytics** — MAE, RMSE, bias, P90, spread and coverage with definitions in tooltips; daily trend; error distribution; largest over-/under-forecasts; exact missing/unmatched accounting.
-- **Decision intelligence (scenarios)** — empirical under-delivery buffers at 50/80/90/95 %, level offset vs variability, error by hour of day, elevated-error days, and an **out-of-sample** check (each day's buffer uses only days ≤ D−2). Prominently labelled *not a purchase recommendation*.
+- **Decision intelligence (scenarios)** — empirical under-delivery buffers at 50/80/90/95 %, level offset vs variability, error by hour of day, elevated-error days, and an **out-of-sample** check (each day's buffer uses only days ≤ D−2). Prominently labelled *illustrative — not a purchase or trading recommendation*.
 - **Data & methodology** — sources with links, selection rule, formulas, scope evidence, assumptions, limitations, live data-quality for the current selection.
 
 ---
@@ -229,7 +231,7 @@ Errors use one envelope: `{"error": {"code": "VALIDATION_ERROR|OUT_OF_RANGE|NOT_
 - **Hour alignment unverified**; hourly forecast shared by two half-hours; adjacent half-hour errors are dependent, so the effective sample is smaller than the interval count.
 - **One winter month.** No seasonal generalisation; tail statistics (P90/P95) are imprecise; scenario buffers are in-sample and descriptive.
 - **Actuals are as served today**; later corrections (if any) are not observable. The WINDFOR publication times in UTC differ between winter and summer and from Elexon's documented list — the app only uses observed `publishTime` values.
-- **Not established:** BMRS licence text could not be retrieved (Elexon's site blocks automated access); attribution wording was taken from secondary sources and must be checked before publication.
+- **Not established:** the BMRS licence text could not be retrieved (Elexon's site blocks automated access). The attribution wording comes from a third-party catalogue and is displayed as unverified (§10).
 - **Docker** unverified on the dev machine (see §4). **Deployment** not yet performed.
 
 ---
@@ -243,14 +245,19 @@ The recommended target is **Render** (single Docker web service built from this 
 ## 10. Data source, licence and attribution
 
 - Data: Elexon **BMRS Insights Solution API** — [FUELHH](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/FUELHH/stream), [WINDFOR](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/WINDFOR/stream). Provenance, retrieval time, period covered and limitations: [`data/snapshots/README.md`](data/snapshots/README.md) and `manifest.json`.
-- _Contains BMRS data (c) Elexon Limited copyright and database right._ The data remain subject to Elexon's licence terms and are **not** covered by this repository's licence.
-- Original code: MIT, see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+- **Attribution — unverified.** Elexon's developer portal says material may be reused for industry participation or non-commercial purposes *provided the source is acknowledged and the attribution in the BMRS Data Licence Terms is followed*. Those licence terms could not be retrieved (the Elexon site returns HTTP 403 to automated access). The wording this project displays — _"Contains BMRS data © Elexon Limited copyright and database right"_ — is reported by a third-party API catalogue (apis.io), **not** taken from an official Elexon page. It is shown in the UI together with a statement that it is unverified. **Before relying on this repository publicly, the owner should read the current BMRS Data Licence Terms and correct the wording if needed.**
+- **Licences are separate.** Original project code is MIT ([`LICENSE`](LICENSE)). The MIT licence applies to the code only; it does not license, and must not be read as relicensing, any Elexon data. The committed snapshot (`data/snapshots/`) and all values derived from it remain subject to Elexon's terms ([`NOTICE`](NOTICE)).
 
 ---
 
 ## 11. AI-usage disclosure
 
-This project was planned and implemented with substantial assistance from **Kiro** (an AI coding agent): requirements, architecture, API research, data investigations, analytical specification, code, tests, documentation and screenshots were produced by the agent under the owner's direction and approval at defined checkpoints. The owner's brief also names **ChatGPT** as an AI tool that may have been used; **the owner should state here whether and how it was used** (this README does not assert any use that is not recorded). All numerical claims in the documentation come from scripts and tests that can be re-run; the independent research probes in `docs/planning/research/` were written before, and share no code with, the production analytics they are used to validate.
+This project was built with substantial AI assistance. It does not claim that every line was written by a person, nor that every line was written by an AI, and per-line authorship was not tracked.
+
+- **Kiro** (an AI coding agent, run from the command line) drafted most of the repository content in sessions directed by the owner: the planning documents, the research probes, the backend and frontend code, the automated tests, the Docker/Render configuration, the screenshots and this README.
+- **ChatGPT** was also used by the owner as an AI-assisted development tool. What it was used for is not recorded in this repository, so no specific file or task is attributed to it here.
+- **Human role:** the owner set the requirements and made the product and analytical decisions (for example the default cutoff, how hourly forecasts are handled, how conflicting duplicates are treated, including a real data snapshot, the licence and the hosting target), and approved the plan and the implementation report at defined checkpoints. No claim is made of line-by-line human review.
+- **How claims were checked rather than assumed:** data findings come from re-runnable scripts that call the public Elexon API ([`docs/planning/research/`](docs/planning/research)); the production analytics are tested against hand-computed examples, a brute-force oracle and an independent recomputation from the raw snapshot; items that could not be verified (Docker build, official licence wording, market deadlines, hour alignment) are listed in §8 as unverified instead of being asserted.
 
 ---
 

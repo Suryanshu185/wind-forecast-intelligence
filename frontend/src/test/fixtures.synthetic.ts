@@ -16,6 +16,8 @@ import type {
 } from "@/api/types";
 
 export const SYNTHETIC_NOTE = "SYNTHETIC TEST FIXTURE";
+export const SCOPE_NOTICE =
+  "FUELHH WIND and WINDFOR may not cover the same generators. Differences between them may reflect dataset scope as well as forecast performance; do not read them as pure forecast skill or as evidence of a procurement shortfall.";
 
 export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   mode: "snapshot",
@@ -24,7 +26,8 @@ export const provenance = (over: Partial<Provenance> = {}): Provenance => ({
   data_sha256: "a".repeat(64),
   period_covered: { delivery_start: "2026-01-01", delivery_end: "2026-01-31" },
   sources: [{ dataset: "FUELHH" }, { dataset: "WINDFOR" }],
-  attribution: "Contains BMRS data (c) Elexon Limited copyright and database right.",
+  attribution: "Contains BMRS data © Elexon Limited copyright and database right",
+  attribution_status: "Unverified: wording reported by a third-party API catalogue.",
   licence_note: "Third-party data.",
   limitations: ["Fixture limitation"],
   notice: null,
@@ -78,6 +81,7 @@ const alignment = { value: "start" as const, status: "assumed" as const, note: "
 
 export function makeSummary(over: Partial<Summary> = {}): Summary {
   return {
+    scope_notice: SCOPE_NOTICE,
     config,
     provenance: provenance(),
     alignment,
@@ -154,7 +158,7 @@ export function makeInterval(i: number, over: Partial<Interval> = {}): Interval 
 
 export function makeIntervals(n = 96, patch: Record<number, Partial<Interval>> = {}): Intervals {
   const intervals = Array.from({ length: n }, (_, i) => makeInterval(i, patch[i]));
-  return { config, provenance: provenance(), alignment, resolution_note: "Hourly forecasts are applied to both half-hours they cover; they are NOT independent half-hour forecasts.", counts: counts({ expected: n, matched: intervals.filter((x) => x.status === "MATCHED").length }), intervals };
+  return { scope_notice: SCOPE_NOTICE, config, provenance: provenance(), alignment, resolution_note: "Hourly forecasts are applied to both half-hours they cover; they are NOT independent half-hour forecasts.", counts: counts({ expected: n, matched: intervals.filter((x) => x.status === "MATCHED").length }), intervals };
 }
 
 export const UNAVAILABLE: Partial<Interval> = {
@@ -173,6 +177,7 @@ export const ZERO_ACTUAL: Partial<Interval> = { actual_mw: 0, error_mw: -5100 };
 export function makeRevisions(over: Partial<Revisions> = {}): Revisions {
   const interval = makeInterval(0);
   return {
+    scope_notice: SCOPE_NOTICE,
     config,
     interval,
     forecast_row_start: interval.forecast_row_start,
@@ -215,7 +220,8 @@ export function makeMeta(over: Partial<Meta> = {}): Meta {
       { id: "WINDFOR", role: "Forecast generation", description: "Wind forecast.", documentation: "https://example.test/windfor", resolution: "60 minutes" },
     ],
     provenance: provenance(),
-    attribution: "Contains BMRS data (c) Elexon Limited copyright and database right.",
+    attribution: "Contains BMRS data © Elexon Limited copyright and database right",
+    attribution_status: "Unverified: wording reported by a third-party API catalogue.",
     scope_diagnostic: {
       headline: "FUELHH WIND and WINDFOR may not cover the same generators.",
       body: "Fixture scope text.",
@@ -232,9 +238,10 @@ export function makeMeta(over: Partial<Meta> = {}): Meta {
 export function makeScenarios(over: Partial<Scenarios> = {}): Scenarios {
   const m = metrics();
   return {
+    scope_notice: SCOPE_NOTICE,
     config,
     provenance: provenance(),
-    disclaimer: "Analytical scenario based on historical forecast errors in a single month. It is not a purchase recommendation and does not estimate any shortfall, volume, cost or saving.",
+    disclaimer: "Illustrative analytical scenario based on historical forecast errors in a single month. It is not a purchase or trading recommendation and does not estimate any shortfall, volume, cost or saving.",
     caveats: ["Based on one winter month.", "In-sample."],
     sample: { matched_intervals: 96, delivery_days: 2, unit: "half-hour" },
     level_offset_mw: -120,

@@ -43,7 +43,10 @@ function Footer() {
   return (
     <footer className="mt-10 border-t border-border">
       <div className="mx-auto max-w-[88rem] space-y-1 px-4 py-6 text-xs text-muted sm:px-6">
-        <p>{meta.data?.attribution ?? "Contains BMRS data (c) Elexon Limited copyright and database right."}</p>
+        <p data-testid="attribution">
+          Data: Elexon BMRS Insights API (FUELHH, WINDFOR). Attribution as cited by a third-party catalogue: “
+          {meta.data?.attribution ?? "Contains BMRS data © Elexon Limited copyright and database right"}”. Elexon’s official licence wording has not been verified.
+        </p>
         <p>
           Retrospective analysis of historical data for demonstration purposes. Not a live forecast and not purchase advice. Third-party data remain subject to Elexon’s licence terms.
         </p>

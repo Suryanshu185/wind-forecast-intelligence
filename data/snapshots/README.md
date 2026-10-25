@@ -16,8 +16,7 @@ Files hold the **verbatim API rows** (sorted by `startTime`, `publishTime`), so 
 
 ## Licence and attribution
 This data is Elexon material and is **not** covered by this repository's MIT licence (see `/NOTICE`).
-Attribution: *Contains BMRS data (c) Elexon Limited copyright and database right.*
-The attribution wording was taken from secondary sources because Elexon's licence page blocked automated access; **verify against the current BMRS Data Licence Terms before publishing**. Elexon gives no warranty of accuracy.
+Attribution: **unverified**. The wording used — *Contains BMRS data © Elexon Limited copyright and database right* — is reported by a third-party API catalogue (apis.io); Elexon's licence page blocked automated access, so the official wording has not been confirmed. **Read the current BMRS Data Licence Terms before publishing.** Elexon gives no warranty of accuracy.
 
 ## Limitations
 See `manifest.json` → `limitations` and `docs/planning/04-data-research-notes.md` (§4, §9, §10). In particular: FUELHH `WIND` and WINDFOR may not cover identical generators, WINDFOR is hourly, and its hour alignment is an unverified assumption.

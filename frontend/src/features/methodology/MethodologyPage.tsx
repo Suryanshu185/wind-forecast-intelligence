@@ -159,7 +159,7 @@ export function MethodologyPage() {
                 ))}
               </ul>
               <p>Snapshot retrieved {fmtRetrieved(m.provenance.retrieved_at)}; integrity hash <code className="break-all text-xs">{m.provenance.data_sha256}</code>. Period covered: {Object.entries(m.provenance.period_covered).map(([k, v]) => `${k.replaceAll("_", " ")} ${v}`).join("; ")}.</p>
-              <p className="text-xs">{m.attribution} Third-party data are subject to Elexon’s licence terms and are not covered by this project’s MIT licence.</p>
+              <p className="text-xs">Attribution wording used: “{m.attribution}”. <strong className="text-ink">{m.attribution_status}</strong> Third-party data are subject to Elexon’s licence terms and are not covered by this project’s MIT licence.</p>
             </Section>
           </>
         )}

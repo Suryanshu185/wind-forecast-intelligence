@@ -134,4 +134,6 @@ def test_rolling_origin_with_no_eligible_days_reports_none() -> None:
 
 
 def test_disclaimer_denies_recommendations() -> None:
-    assert "not a purchase recommendation" in DISCLAIMER and "scenario" in DISCLAIMER.lower()
+    assert "not a purchase or trading recommendation" in DISCLAIMER and DISCLAIMER.startswith(
+        "Illustrative"
+    )

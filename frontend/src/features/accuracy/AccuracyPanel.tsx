@@ -122,6 +122,7 @@ export function AccuracyPanel({ params, onInspect }: { params: AnalysisParams; o
               <CardBody className="space-y-4">
                 <MetricsGrid metrics={s.metrics} counts={s.counts} />
                 <p className="text-xs text-muted">{s.resolution_note} <LeadTimeNote summary={s} /></p>
+                <p className="text-xs text-warn" data-testid="scope-reminder">{s.scope_notice}</p>
               </CardBody>
             </Card>
 
@@ -143,7 +144,7 @@ export function AccuracyPanel({ params, onInspect }: { params: AnalysisParams; o
                 <CardBody>{s.distribution.bins.length === 0 ? <EmptyState title="No matched intervals">There is nothing to plot because no interval has both an actual and an eligible forecast.</EmptyState> : <Histogram summary={s} />}</CardBody>
               </Card>
               <Card aria-labelledby="extremes-title">
-                <CardHeader id="extremes-title" title="Largest forecast misses" subtitle="Top intervals by signed error. Select one to inspect what was known at decision time." />
+                <CardHeader id="extremes-title" title="Largest forecast misses" subtitle="Largest signed differences between FUELHH and WINDFOR. Select one to inspect what was known at decision time." />
                 <CardBody className="space-y-5">
                   <ExtremesTable title="Largest over-forecasts (forecast far above actual)" rows={s.over_forecasts} onInspect={onInspect} tone="over" />
                   <ExtremesTable title="Largest under-forecasts (actual far above forecast)" rows={s.under_forecasts} onInspect={onInspect} tone="under" />

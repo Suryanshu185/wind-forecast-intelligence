@@ -15,7 +15,7 @@ function Disclaimer({ text }: { text: string }) {
     <div role="note" data-testid="scenario-disclaimer" className="flex items-start gap-3 rounded-lg border border-warn/50 bg-warn/10 px-4 py-3 text-sm text-ink">
       <OctagonAlert className="mt-0.5 size-5 shrink-0 text-warn" aria-hidden />
       <div>
-        <p className="font-semibold">Analytical scenario — not a purchase recommendation</p>
+        <p className="font-semibold">Illustrative analytical scenario — not a purchase or trading recommendation</p>
         <p className="mt-1 text-[13px] text-muted">{text}</p>
       </div>
     </div>
@@ -106,6 +106,7 @@ export function DecisionPanel({ params }: { params: AnalysisParams }) {
         {(s) => (
           <>
             <Disclaimer text={s.disclaimer} />
+            <p className="text-xs text-muted" data-testid="scope-reminder">{s.scope_notice}</p>
             <div className="grid gap-5 lg:grid-cols-[3fr_2fr]">
               <Card aria-labelledby="buffers-title">
                 <CardHeader id="buffers-title" title="Illustrative uncertainty buffers"
@@ -127,7 +128,7 @@ export function DecisionPanel({ params }: { params: AnalysisParams }) {
 
             <div className="grid gap-5 lg:grid-cols-2">
               <Card aria-labelledby="hod-title">
-                <CardHeader id="hod-title" title="Error by hour of day (London)" subtitle="Where in the day the forecast was least reliable." />
+                <CardHeader id="hod-title" title="Error by hour of day (London)" subtitle="Where in the day FUELHH and WINDFOR differed most (dataset scope included — not pure forecast skill)." />
                 <CardBody><HourOfDay s={s} /></CardBody>
               </Card>
               <Card aria-labelledby="roll-title">

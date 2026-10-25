@@ -4,6 +4,19 @@ from __future__ import annotations
 
 APP_VERSION = "0.1.0"
 
+# Attribution wording is cited by a third-party API catalogue (apis.io). Elexon's own licence page could not be
+# retrieved (HTTP 403 to automated access), so the wording is NOT verified and is never presented as official.
+ATTRIBUTION = "Contains BMRS data © Elexon Limited copyright and database right"
+ATTRIBUTION_STATUS = (
+    "Unverified: this wording is reported by a third-party API catalogue. Elexon's BMRS Data Licence Terms could "
+    "not be retrieved, so the required attribution has not been confirmed from the official source."
+)
+
+SCOPE_NOTICE = (
+    "FUELHH WIND and WINDFOR may not cover the same generators. Differences between them may reflect dataset scope "
+    "as well as forecast performance; do not read them as pure forecast skill or as evidence of a procurement shortfall."
+)
+
 PURPOSE = (
     "Retrospective simulation of historical day-ahead decision-making for January 2026 deliveries: "
     "which wind forecast could have been known at the decision cutoff, and how accurate was it? "

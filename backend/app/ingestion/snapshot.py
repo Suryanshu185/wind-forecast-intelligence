@@ -37,7 +37,8 @@ FUELHH_COLUMNS = (
 )
 WINDFOR_COLUMNS = ("dataset", "publishTime", "startTime", "generation")
 
-ATTRIBUTION = "Contains BMRS data (c) Elexon Limited copyright and database right."
+ATTRIBUTION = "Contains BMRS data © Elexon Limited copyright and database right"
+ATTRIBUTION_STATUS = "Unverified: wording reported by a third-party API catalogue; Elexon's licence text could not be retrieved."
 LIMITATIONS = (
     "FUELHH WIND and WINDFOR may not cover the same set of generators; differences between them may "
     "reflect dataset scope as well as forecast performance (docs/planning/04-data-research-notes.md s10).",
@@ -170,6 +171,7 @@ def build_manifest(
         },
         "data_sha256": _sha256((fh_hash + wf_hash).encode()),
         "attribution": ATTRIBUTION,
+        "attribution_status": ATTRIBUTION_STATUS,
         "licence_note": (
             "Third-party data subject to Elexon BMRS Data Licence Terms; NOT covered by this "
             "repository's MIT licence. Verify attribution wording against the current licence."

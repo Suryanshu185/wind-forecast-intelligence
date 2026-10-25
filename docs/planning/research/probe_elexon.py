@@ -16,7 +16,6 @@ from __future__ import annotations
 import collections as C
 import json
 import math
-import tempfile
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -47,8 +46,6 @@ def main() -> None:
              settlementDateTo="2026-01-31", fuelType="WIND")
     wf = get("/datasets/WINDFOR/stream", publishDateTimeFrom="2025-12-27T00:00:00Z",
              publishDateTimeTo="2026-02-04T00:00:00Z")
-    tmp = tempfile.mkdtemp(prefix="elexon_probe_")
-    print(f"# temp dir (not in repo): {tmp}")
 
     print("\n== FUELHH (WIND, settlement dates 2026-01-01..2026-01-31)")
     print("rows:", len(fh), "| keys:", sorted(fh[0]))

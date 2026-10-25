@@ -14,6 +14,7 @@ export interface Provenance {
   period_covered: Record<string, string>;
   sources: Array<Record<string, unknown>>;
   attribution: string;
+  attribution_status: string;
   licence_note: string;
   limitations: string[];
   notice?: string | null;
@@ -83,6 +84,7 @@ export interface Extreme {
 }
 
 export interface Summary {
+  scope_notice: string;
   config: ResolvedConfig;
   provenance: Provenance;
   alignment: { value: Alignment; status: "assumed"; note: string };
@@ -138,6 +140,7 @@ export interface Interval {
 }
 
 export interface Intervals {
+  scope_notice: string;
   config: ResolvedConfig;
   provenance: Provenance;
   alignment: Summary["alignment"];
@@ -158,6 +161,7 @@ export interface Vintage {
 }
 
 export interface Revisions {
+  scope_notice: string;
   config: ResolvedConfig;
   interval: Interval;
   forecast_row_start: string;
@@ -175,6 +179,7 @@ export interface Bucket {
 }
 
 export interface Scenarios {
+  scope_notice: string;
   config: ResolvedConfig;
   provenance: Provenance;
   disclaimer: string;
@@ -242,6 +247,7 @@ export interface Meta {
   datasets: Array<{ id: string; role: string; description: string; documentation: string; resolution: string }>;
   provenance: Provenance;
   attribution: string;
+  attribution_status: string;
   scope_diagnostic: ScopeDiagnostic;
   error_convention: string;
 }

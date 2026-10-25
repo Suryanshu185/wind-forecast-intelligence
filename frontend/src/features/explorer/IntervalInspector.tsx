@@ -151,6 +151,10 @@ export function IntervalInspector({
         </p>
       ) : null}
 
+      <p className="text-[11px] leading-snug text-muted" data-testid="inspector-scope-note">
+        Differences between FUELHH and WINDFOR may reflect dataset scope as well as forecast performance.
+      </p>
+
       <section aria-label="Why this forecast was selected">
         <h3 className="mb-2 text-sm font-semibold text-ink">Why this forecast?</h3>
         <AsyncPanel query={rev} skeletonClassName="h-40" label="Loading revision details">
