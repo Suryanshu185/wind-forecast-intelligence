@@ -12,7 +12,7 @@ It answers three questions a procurement team would ask:
 
 | | |
 |---|---|
-| **Live deployment** | _Not deployed yet — awaiting the owner's approval._ (URL will be added here.) |
+| **Live deployment** | https://wind-forecast-intelligence-xi.vercel.app (Vercel; verified 2026-10-26, see §9) |
 | **Stack** | React 19 + TypeScript · Python 3.12 + FastAPI · pandas/NumPy · Docker/Compose |
 | **Tests** | 263 backend (pytest) · 48 frontend (Vitest + Testing Library) |
 
@@ -243,7 +243,7 @@ The deployment target is **Vercel** (one project, FastAPI preset): the build ins
 
 **To deploy** (needs the owner's Vercel account): import the GitHub repository (framework preset *FastAPI*/*Other*, root directory = repository root) or run `npx vercel --prod` after `vercel login`. **Do not set a custom Install Command** — it replaces the Python dependency installation (this caused the first deployment to fail; see [`docs/planning/07-deployment-plan.md`](docs/planning/07-deployment-plan.md) §8).
 
-**Verification status:** see the deployment section of the final report; a production URL is recorded here only after it has been verified.
+**Verification status (2026-10-26):** the production deployment at https://wind-forecast-intelligence-xi.vercel.app was built on Vercel from commit `a527311` and checked from a fresh, unauthenticated browser profile and plain HTTP requests: the dashboard loads the real January 2026 snapshot (1,488 of 1,488 intervals; MAE 2,126 MW, RMSE 2,621 MW, bias −1,840 MW, matching the independent research probe), cutoff / date-range / hourly / alternative-alignment changes work, invalid requests return the documented `422`/`404` envelope, the dataset-scope, unverified-alignment and unverified-attribution notices are visible, security headers and gzip are present, and there were no console errors or failed requests. Runtime logs for the checked period contain no errors. **Not measured:** a clean cold-start time (the function stayed warm after four idle minutes; first-request timings of roughly 2–3 s were observed). Only the `…-xi.vercel.app` alias is public; the per-deployment and project-name hostnames stay behind Vercel Authentication. The Hobby plan is for personal, non-commercial use (Vercel Terms; fair-use guidelines last updated 2026-09-14); a portfolio demo with no payments, ads or affiliate links is non-commercial under Vercel's definition, but if in doubt Vercel asks that you contact their support.
 
 ---
 
