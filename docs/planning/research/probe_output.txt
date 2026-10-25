@@ -1,0 +1,32 @@
+# Retrieved (UTC): 2026-10-25T10:11:17Z
+# temp dir (not in repo): /var/folders/bd/b42z_t411bz586ft15w7fsv00000gn/T/elexon_probe__w13rzs4
+
+== FUELHH (WIND, settlement dates 2026-01-01..2026-01-31)
+rows: 1488 | keys: ['dataset', 'fuelType', 'generation', 'publishTime', 'settlementDate', 'settlementPeriod', 'startTime']
+distinct startTime: 1488 (expected 31*48 = 1488)
+startTime minutes: {30: 744, 0: 744}
+settlement periods per date: {48}
+null generation: 0 | zero: 0 | min/max MW: 1695 17805
+publishTime - startTime (minutes) distribution: {30.0: 1484, 56.0: 1, 86.0: 1, 116.0: 1, 145.0: 1}
+
+== WINDFOR (publishTime 2025-12-27 .. 2026-02-04)
+rows: 22776 | keys: ['dataset', 'generation', 'publishTime', 'startTime']
+startTime minutes: {0: 22776} <- hourly resolution if only {0}
+distinct publishTime (vintages): 312 | rows per vintage: {73: 312}
+publish clock times (UTC): [('02:30', 39), ('04:30', 39), ('07:30', 39), ('09:30', 39), ('11:30', 38), ('12:25', 1), ('15:30', 39), ('18:30', 39), ('22:30', 39)]
+duplicate (startTime, publishTime) keys: 0
+null generation: 0 | zero: 0
+horizon (startTime - publishTime) hours: min -25.5, max 66.5 (negative => forecast published after the interval began)
+nominal winter publish slots absent: ['2026-01-15T11:30:00Z']
+off-schedule publishTimes: ['2026-01-15T12:25:00Z']
+
+== Exploratory: cutoff sensitivity (decision day = delivery date - 1, clock time in UTC=London)
+cutoff 09:20: avail 744/744h-slots, matched 1488/1488 SP | MAE 2145 RMSE 2616 bias -1852 MW | lead 16.5-39.5 h
+cutoff 09:50: avail 744/744h-slots, matched 1488/1488 SP | MAE 2126 RMSE 2621 bias -1840 MW | lead 14.5-37.5 h
+cutoff 12:00: avail 744/744h-slots, matched 1488/1488 SP | MAE 2021 RMSE 2481 bias -1806 MW | lead 12.5-37.5 h
+cutoff 15:30: avail 744/744h-slots, matched 1488/1488 SP | MAE 1984 RMSE 2448 bias -1817 MW | lead 8.5-31.5 h
+cutoff 23:59: avail 744/744h-slots, matched 1488/1488 SP | MAE 1941 RMSE 2411 bias -1714 MW | lead 1.5-24.5 h
+
+== FUELHH settlement periods on clock-change days (2025)
+2025-03-30 (spring forward): 46 rows, max settlementPeriod 46, startTime 2025-03-30T00:00:00Z .. 2025-03-30T22:30:00Z
+2025-10-26 (autumn back): 50 rows, max settlementPeriod 50, startTime 2025-10-25T23:00:00Z .. 2025-10-26T23:30:00Z

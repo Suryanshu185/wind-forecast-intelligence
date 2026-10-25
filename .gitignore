@@ -1,0 +1,104 @@
+# ---------- Secrets & local environment ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+credentials*.json
+secrets.*
+*.secret
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+.python-version.local
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+.ipynb_checkpoints/
+
+# ---------- Node / React / Vite ----------
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+frontend/dist/
+frontend/build/
+frontend/coverage/
+frontend/.vite/
+frontend/*.tsbuildinfo
+*.tsbuildinfo
+.eslintcache
+.parcel-cache/
+.cache/
+.turbo/
+.next/
+
+# ---------- Local databases & generated data ----------
+*.db
+*.sqlite
+*.sqlite3
+*.duckdb
+*.parquet
+*.feather
+# Raw/ad-hoc downloads and caches produced by ingestion at runtime
+data/raw/
+data/cache/
+data/tmp/
+*.ndjson
+# NOTE: A *reviewed, pinned* snapshot of real Elexon January 2026 data may be
+# committed deliberately under data/snapshots/ (see docs/planning/02-architecture-design.md).
+# That directory is intentionally NOT ignored. Add it only after approval.
+
+# ---------- Docker ----------
+docker-compose.override.yml
+.docker/
+
+# ---------- IDE / OS ----------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ---------- Deployment tooling ----------
+.vercel/
+.render/
+.fly/
+
+# ---------- Misc ----------
+*.log
+logs/
+tmp/
+*.tmp
+# Screenshots/recordings generated while recording the demo (final README images go in docs/images/)
+*.mp4
+*.mov
