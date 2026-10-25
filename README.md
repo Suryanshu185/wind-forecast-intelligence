@@ -249,6 +249,20 @@ The deployment target is **Vercel**: the React app is built to static files and 
 
 ## 10. Data source, licence and attribution
 
+### The real-data snapshot (`data/snapshots/`)
+
+| | |
+|---|---|
+| Nature | **Real** Elexon data, verbatim API rows. Never synthetic (`is_synthetic: false` in the manifest). Synthetic fixtures exist only in tests and an explicit dev mode, and are always labelled *SYNTHETIC DEVELOPMENT FIXTURE* in the UI. |
+| Retrieved (UTC) | 2026-10-25T11:06:27Z |
+| Delivery period | settlement dates 2026-01-01 to 2026-01-31 |
+| WINDFOR publish window | 2025-12-27T00:00:00Z to 2026-02-04T00:00:00Z (every revision in the window, original `publishTime` kept) |
+| Rows | FUELHH `WIND`: 1,488 · WINDFOR: 22,776 (312 vintages × 73 hourly rows) |
+| Size | 124 KB (gzip CSV) |
+| Integrity | SHA-256 per file and combined (`a4e5f8b3846eda77…`), verified on every load; the app refuses to start on a mismatch |
+| How it was made | `python -m app.cli ingest` (two streaming requests; URLs and row counts are recorded in `manifest.json`) |
+| Limitations | See §2 and §8: dataset-scope mismatch, unverified hour alignment, hourly vs half-hourly, one winter month, corrections not observable |
+
 - Data: Elexon **BMRS Insights Solution API** — [FUELHH](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/FUELHH/stream), [WINDFOR](https://bmrs.elexon.co.uk/api-documentation/endpoint/datasets/WINDFOR/stream). Provenance, retrieval time, period covered and limitations: [`data/snapshots/README.md`](data/snapshots/README.md) and `manifest.json`.
 - **Attribution — unverified.** Elexon's developer portal says material may be reused for industry participation or non-commercial purposes *provided the source is acknowledged and the attribution in the BMRS Data Licence Terms is followed*. Those licence terms could not be retrieved (the Elexon site returns HTTP 403 to automated access). The wording this project displays — _"Contains BMRS data © Elexon Limited copyright and database right"_ — is reported by a third-party API catalogue (apis.io), **not** taken from an official Elexon page. It is shown in the UI together with a statement that it is unverified. **Before relying on this repository publicly, the owner should read the current BMRS Data Licence Terms and correct the wording if needed.**
 - **Licences are separate.** Original project code is MIT ([`LICENSE`](LICENSE)). The MIT licence applies to the code only; it does not license, and must not be read as relicensing, any Elexon data. The committed snapshot (`data/snapshots/`) and all values derived from it remain subject to Elexon's terms ([`NOTICE`](NOTICE)).
