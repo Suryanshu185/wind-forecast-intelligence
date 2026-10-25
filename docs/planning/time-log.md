@@ -19,3 +19,9 @@ Planning time is tracked **separately** from the 16 h implementation budget (dec
 
 Note: wall-clock is the only objective measure available to the agent; it is far below the human-effort estimates in
 `03-implementation-tasks.md`. Elapsed implementation wall-clock at 17:14 = 0.93 h of the 16 h budget.
+| M7 Docker/Compose/Render + prod-serving verification | 17:14 | 17:27 | 0.2 | 1.25 | Docker engine would not start (containerd exit 2, host disk ~245 MiB): image build NOT executed; layout simulated |
+| M8-M9 README, screenshots, demo scripts, final gates | 17:27 | 17:38 | 0.2 | 2.25 | 242 backend + 41 frontend tests green |
+
+**Total implementation wall-clock: 16:18 -> 17:38 start-to-finish = ~1.35 h of the 16 h budget** (from 16:18; includes the two pre-implementation investigations).
+Planning was tracked separately (~0.7 h). Wall-clock is the only objective measure available to the agent and is far below the
+human-effort estimates in `03-implementation-tasks.md`; the unused budget is not a reason to expand scope without direction.

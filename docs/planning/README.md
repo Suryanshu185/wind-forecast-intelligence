@@ -1,6 +1,6 @@
 # Planning Artifacts
 
-Status: **planning phase complete — awaiting review. No application code exists.**
+Status: **implemented (M0–M9) — awaiting owner review.** Planning documents were updated after the pre-implementation investigations (see `04` §9–11, `05`, `08` §5) and approval of the plan; `time-log.md` records hours by milestone. Nothing has been published, pushed or deployed.
 Kiro "Spec mode" is not available in this CLI session, so the equivalent specification set is kept here as Markdown.
 
 | # | Document | Purpose |
