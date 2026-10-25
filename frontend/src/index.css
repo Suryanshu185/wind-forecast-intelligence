@@ -27,3 +27,8 @@ body {
 }
 :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; border-radius: 4px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Grid/flex children must be allowed to shrink below their content width; otherwise wide tables and
+   charts stretch single-column layouts past the viewport on small screens. */
+.grid > *, .flex > * { min-width: 0; }
+main { overflow-x: clip; }
