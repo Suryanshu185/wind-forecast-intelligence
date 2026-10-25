@@ -1,0 +1,27 @@
+LICENSING NOTICE
+================
+
+1. Original project code
+   The MIT licence in ./LICENSE applies to the original source code in this
+   repository only.
+
+2. Third-party data (NOT covered by the MIT licence)
+   Any Elexon data in this repository (e.g. files under data/snapshots/) is
+   third-party material. It remains subject to Elexon's BMRS Data Licence Terms
+   and the Insights Solution API terms of use, not to the MIT licence.
+   The MIT licence does not grant any rights over that data and does not
+   override Elexon's terms.
+
+   Required attribution (wording as reported by secondary sources; verify
+   against the current BMRS Data Licence Terms before publication):
+
+     Contains BMRS data (c) Elexon Limited copyright and database right.
+
+   Source: Elexon Insights Solution API (https://data.elexon.co.uk/bmrs/api/v1),
+   datasets FUELHH and WINDFOR. Provenance, retrieval time, period covered and
+   limitations are recorded in data/snapshots/manifest.json. Elexon accepts no
+   liability for errors or omissions in the data.
+
+3. Third-party software
+   Dependencies retain their own licences; see the lockfiles
+   (backend/uv.lock, frontend/package-lock.json).
