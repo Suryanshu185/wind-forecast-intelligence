@@ -102,3 +102,4 @@ tmp/
 # Screenshots/recordings generated while recording the demo (final README images go in docs/images/)
 *.mp4
 *.mov
+.vercel
