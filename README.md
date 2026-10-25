@@ -14,7 +14,7 @@ It answers three questions a procurement team would ask:
 |---|---|
 | **Live deployment** | _Not deployed yet — awaiting the owner's approval._ (URL will be added here.) |
 | **Stack** | React 19 + TypeScript · Python 3.12 + FastAPI · pandas/NumPy · Docker/Compose |
-| **Tests** | 261 backend (pytest) · 48 frontend (Vitest + Testing Library) |
+| **Tests** | 263 backend (pytest) · 48 frontend (Vitest + Testing Library) |
 
 ![Forecast Explorer](docs/images/explorer.jpg)
 
@@ -233,17 +233,17 @@ Errors use one envelope: `{"error": {"code": "VALIDATION_ERROR|OUT_OF_RANGE|NOT_
 - **One winter month.** No seasonal generalisation; tail statistics (P90/P95) are imprecise; scenario buffers are in-sample and descriptive.
 - **Actuals are as served today**; later corrections (if any) are not observable. The WINDFOR publication times in UTC differ between winter and summer and from Elexon's documented list — the app only uses observed `publishTime` values.
 - **Not established:** the BMRS licence text could not be retrieved (Elexon's site blocks automated access). The attribution wording comes from a third-party catalogue and is displayed as unverified (§10).
-- **Docker:** production compose service verified; dev/test profiles not (see §4). **Deployment** not yet performed (Vercel configuration is prepared and locally simulated, see §9).
+- **Docker:** production compose service verified; dev/test profiles not (see §4). **Deployment** is documented in §9.
 
 ---
 
 ## 9. Deployment
 
-The deployment target is **Vercel**: the React app is built to static files and served from the CDN, and the FastAPI app runs as a Python Function ([`api/index.py`](api/index.py)) behind `/api/*`, configured by [`vercel.json`](vercel.json) and the lockfile-pinned [`requirements.txt`](requirements.txt). The pinned January 2026 snapshot is bundled with the function, so the deployed app needs no database and makes no calls to Elexon at runtime. Vercel's documentation (checked 2026-10-25) supports FastAPI on its Python runtime with dependencies from `requirements.txt`, a 500 MB uncompressed bundle limit (this function's dependencies are ≈ 80 MB) and a read-only filesystem (the app writes nothing).
+The deployment target is **Vercel** (one project, FastAPI preset): the build installs the pinned Python dependencies from [`requirements.txt`](requirements.txt), builds the React app in the project build command, and bundles the UI, the API code and the pinned January 2026 snapshot into one Python Function ([`api/index.py`](api/index.py)) that serves both the UI and `/api/*`. Configuration: [`vercel.json`](vercel.json). The deployed app needs no database and makes no calls to Elexon at runtime. Vercel's documentation (checked 2026-10-25/26) lists a 500 MB uncompressed bundle limit (this bundle is ≈ 114 MB) and a read-only filesystem (the app writes nothing).
 
-**To deploy** (needs the owner's Vercel account): import the GitHub repository in the Vercel dashboard (framework preset *Other*, root directory = repository root; everything else comes from `vercel.json`), or run `npx vercel` / `npx vercel --prod` from the repository root after `vercel login`.
+**To deploy** (needs the owner's Vercel account): import the GitHub repository (framework preset *FastAPI*/*Other*, root directory = repository root) or run `npx vercel --prod` after `vercel login`. **Do not set a custom Install Command** — it replaces the Python dependency installation (this caused the first deployment to fail; see [`docs/planning/07-deployment-plan.md`](docs/planning/07-deployment-plan.md) §8).
 
-**Verification status:** the function entry point was run locally from an environment built **only** from `requirements.txt` with ASGI lifespan disabled (as serverless hosts may), and returned the expected real-snapshot results; `vercel.json` consistency (bundled snapshot, API-before-SPA rewrites, CSP) and the `requirements.txt`/`uv.lock` match are covered by tests. **Not verified:** an actual Vercel build and deployment, Vercel's routing behaviour for the rewrites, and cold-start timing — none of these can be checked until the project is deployed. The Docker image remains available for any container host (§4).
+**Verification status:** see the deployment section of the final report; a production URL is recorded here only after it has been verified.
 
 ---
 

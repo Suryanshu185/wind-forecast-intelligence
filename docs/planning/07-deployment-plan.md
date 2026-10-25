@@ -57,3 +57,42 @@ The owner chose Vercel. Consequences relative to the options above (this is "Opt
 - The function has a cold start (Python + pandas import, then a ≈ 25k-row snapshot load); not yet measured. The UI's error state already explains a slow first request.
 - `render.yaml` was removed. The Dockerfile/compose files remain for local use and other container hosts.
 - Still unverified until a real deployment: build success, rewrite behaviour (`/api/*` → function, SPA fallback), response headers, cold-start time, Vercel plan limits for the chosen account type (including Hobby plan terms on non-commercial use).
+
+
+---
+
+## 8. First Vercel deployment failed — diagnosis and fix (2026-10-26)
+
+**Symptom.** The first production deployment built "successfully" and reported Ready, but every route returned
+`500 FUNCTION_INVOCATION_FAILED` with no runtime log entries. The build log warned "FastAPI static file collection failed".
+
+**Confirmed facts** (each checked against the build output, Vercel's API, or the builder's own source):
+1. Vercel detected `framework: fastapi` and used `@vercel/python` 28.0.1. The function bundle was ~2.5 MB; its vendored
+   packages were only `pip` and `vercel_runtime` — **no FastAPI, Starlette, Pydantic, pandas, NumPy or httpx**. The app code
+   and the snapshot *were* included.
+2. The project's stored `installCommand` (`cd frontend && npm ci ...`, saved from our `vercel.json` by the first deploy) was
+   in effect. In the builder source, a non-empty `installCommand` is the *only* install step run: it sets
+   `assumeDepsInstalled = true` and skips the builder's own `uv`/`requirements.txt` installation. Removing the setting
+   restored the log line `Installing required dependencies from requirements.txt`.
+3. The "static file collection failed" warning is a downstream symptom: the builder imports the app from the (empty) venv to
+   discover static mounts, which cannot succeed without FastAPI installed.
+4. The stored project `buildCommand` ran inside the Python build step, but its output (`frontend/dist`) was published nowhere
+   (the deployment contained no static files), so the UI was missing as well.
+5. Settings in `vercel.json` do **not** clear values already stored on the project (stripping the file left the old
+   overrides active); the stored project settings had to be corrected too.
+6. The uploaded source contained no `.env*` or `.vercel` state (checked via the deployment files API).
+
+**Hypotheses not adopted.** Moving the frontend build into Python (pyproject build script) was not needed; `app.frontend()`
+CDN promotion was not used because the builder suppresses CDN mounts when the app has middleware (ours has several).
+
+**Fix (smallest change supported by the evidence).** One Vercel project, FastAPI preset:
+- no `installCommand` (the builder installs `requirements.txt`);
+- `buildCommand`: `cd frontend && npm ci && npm run build` (runs after the Python install, before bundling);
+- the function bundles `frontend/dist`, `backend/app` and `data/snapshots`, and serves the UI itself through the existing,
+  tested SPA route (CSP and security headers are set by the app, so `vercel.json` carries no `headers`/`rewrites`);
+- `api/index.py` points `FRONTEND_DIST_DIR` at the bundled build;
+- stored project settings were corrected to match.
+
+**Verification of the fix before deploying.** `vercel build` output inspected: all 12 required packages vendored as Linux
+x86_64 wheels, snapshot + 26 app modules + UI bundled, ~114 MB of the 500 MB limit, no credentials or `node_modules`.
+The bundle cannot be executed on a macOS arm64 machine (Linux binaries), so runtime verification is done on a Vercel preview.

@@ -1,47 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "cd frontend && npm ci --no-audit --no-fund",
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/dist",
+  "installCommand": null,
+  "buildCommand": "cd frontend && npm ci --no-audit --no-fund && npm run build",
+  "outputDirectory": null,
   "functions": {
     "api/index.py": {
       "maxDuration": 30,
-      "includeFiles": "{backend/app/**,data/snapshots/**}",
-      "excludeFiles": "{frontend/**,docs/**,backend/tests/**,backend/.venv/**,**/node_modules/**}"
+      "includeFiles": "{backend/app/**,data/snapshots/**,frontend/dist/**}",
+      "excludeFiles": "{frontend/src/**,frontend/node_modules/**,**/node_modules/**,docs/**,backend/tests/**,backend/.venv/**,.env*,.vercel/**,.git/**}"
     }
-  },
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" },
-    { "source": "/docs", "destination": "/api/index" },
-    { "source": "/openapi.json", "destination": "/api/index" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "no-referrer" },
-        { "key": "X-Frame-Options", "value": "DENY" }
-      ]
-    },
-    {
-      "source": "/",
-      "headers": [
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-        }
-      ]
-    },
-    {
-      "source": "/methodology",
-      "headers": [
-        {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-        }
-      ]
-    }
-  ]
+  }
 }

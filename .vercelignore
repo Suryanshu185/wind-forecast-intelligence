@@ -12,3 +12,5 @@ docker-compose.yml
 .env.*
 !.env.example
 .vercel
+/pyproject.toml
+/uv.lock

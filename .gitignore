@@ -103,3 +103,7 @@ tmp/
 *.mp4
 *.mov
 .vercel
+
+# generated at the repo root by `vercel build` from requirements.txt (not source files)
+/pyproject.toml
+/uv.lock
