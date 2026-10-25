@@ -111,6 +111,14 @@ def create_app(
     return app
 
 
+# The SPA needs same-origin scripts/XHR and inline styles (Recharts/Radix set style attributes). The Swagger UI
+# page at /docs is intentionally excluded from this policy because it loads assets from a CDN.
+SPA_CSP = (
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+    "font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+)
+
+
 def _mount_spa(app: FastAPI, dist: Path | None) -> None:
     """Serve the built React app (production image). API routes take precedence."""
     if dist is None or not (dist / "index.html").is_file():
@@ -122,9 +130,14 @@ def _mount_spa(app: FastAPI, dist: Path | None) -> None:
         if path.startswith("api/") or path in ("docs", "openapi.json"):
             return _error(404, "NOT_FOUND", "Not found")
         candidate = (root / path).resolve()
+        headers = {"Content-Security-Policy": SPA_CSP}
         if path and candidate.is_file() and root in candidate.parents:
-            return FileResponse(candidate)
-        return FileResponse(root / "index.html")
+            immutable = path.startswith("assets/")  # content-hashed filenames
+            if immutable:
+                headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            return FileResponse(candidate, headers=headers)
+        headers["Cache-Control"] = "no-cache"
+        return FileResponse(root / "index.html", headers=headers)
 
 
 app = create_app()

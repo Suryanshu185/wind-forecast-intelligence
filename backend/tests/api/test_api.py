@@ -501,3 +501,26 @@ def test_large_responses_are_gzip_compressed(real: TestClient) -> None:
 def test_security_headers_present(real: TestClient) -> None:
     h = real.get("/api/v1/health").headers
     assert h["x-content-type-options"] == "nosniff" and h["x-frame-options"] == "DENY"
+
+
+# ------------------------------------------------------------------ SPA serving (production image)
+def test_spa_is_served_with_csp_and_path_traversal_is_blocked(tmp_path: Any) -> None:
+    dist = tmp_path / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<!doctype html><title>spa</title>")
+    (dist / "assets" / "app-abc123.js").write_text("console.log(1)")
+    (tmp_path / "secret.txt").write_text("top secret")
+    settings = Settings(frontend_dist_dir=dist)
+    with TestClient(create_app(settings, SyntheticRepository())) as c:
+        root = c.get("/")
+        assert root.status_code == 200 and "<title>spa</title>" in root.text
+        assert "default-src 'self'" in root.headers["content-security-policy"]
+        assert c.get("/methodology").text == root.text  # client-side route falls back to index.html
+        asset = c.get("/assets/app-abc123.js")
+        assert asset.status_code == 200 and "immutable" in asset.headers["cache-control"]
+        assert "top secret" not in c.get("/../secret.txt").text
+        assert "top secret" not in c.get("/%2e%2e/secret.txt").text
+        assert c.get("/api/v1/health").status_code == 200  # API still takes precedence
+        missing_api = c.get("/api/v1/does-not-exist")
+        assert missing_api.status_code == 404 and missing_api.json()["error"]["code"] == "NOT_FOUND"
+        assert "content-security-policy" not in c.get("/api/v1/health").headers

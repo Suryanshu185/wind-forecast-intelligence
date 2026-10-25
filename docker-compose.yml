@@ -1,0 +1,78 @@
+# One command, production-like (API + built UI on http://localhost:8000):
+#     docker compose up --build
+# Hot-reload development (UI on :5173, API on :8000):
+#     docker compose --profile dev up --build backend-dev frontend-dev
+# Tests in containers:
+#     docker compose --profile test run --rm test-backend
+#     docker compose --profile test run --rm test-frontend
+# No secrets are needed: the Elexon API is unauthenticated and the app runs from a pinned, hash-verified snapshot.
+
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+    image: wind-forecast-intelligence:local
+    ports:
+      - "8000:8000"
+    environment:
+      DATA_SOURCE_MODE: snapshot
+      LOG_LEVEL: INFO
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+  backend-dev:
+    profiles: [dev]
+    build:
+      context: .
+      target: backend-dev
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: development
+      DATA_SOURCE_MODE: snapshot
+      CORS_ALLOW_ORIGINS: "http://localhost:5173"
+    volumes:
+      - ./backend/app:/app/backend/app
+      - ./data:/app/data
+
+  frontend-dev:
+    profiles: [dev]
+    image: node:22-slim
+    working_dir: /app/frontend
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    environment:
+      BACKEND_URL: http://backend-dev:8000
+    volumes:
+      - ./frontend:/app/frontend
+      - frontend_node_modules:/app/frontend/node_modules
+    depends_on: [backend-dev]
+
+  test-backend:
+    profiles: [test]
+    build:
+      context: .
+      target: backend-dev
+    command: pytest -q
+    environment:
+      DATA_SOURCE_MODE: snapshot
+    volumes:
+      - ./backend/app:/app/backend/app
+      - ./backend/tests:/app/backend/tests
+      - ./data:/app/data
+
+  test-frontend:
+    profiles: [test]
+    image: node:22-slim
+    working_dir: /app/frontend
+    command: sh -c "npm ci --no-audit --no-fund && npx tsc --noEmit && npx eslint . && npx vitest run"
+    volumes:
+      - ./frontend:/app/frontend
+      - frontend_node_modules:/app/frontend/node_modules
+
+volumes:
+  frontend_node_modules:
